@@ -1,0 +1,113 @@
+{
+  "layout": {
+    "components": [
+      {
+        "id": "nav-1",
+        "type": "navbar",
+        "logo": "MyBrand",
+        "sticky": true,
+        "backgroundColor": "#1e293b",
+        "textColor": "#f8fafc",
+        "links": [
+          { "label": "Acasa",   "href": "#hero" },
+          { "label": "Despre",  "href": "#about" },
+          { "label": "Contact", "href": "#contact" }
+        ]
+      },
+      {
+        "id": "hero-section",
+        "type": "section",
+        "backgroundColor": "#f8fafc",
+        "padding": "80px 24px",
+        "minHeight": "60vh",
+        "children": [
+          {
+            "id": "hero-title",
+            "type": "text",
+            "tag": "h1",
+            "content": "Construieste pagini vizual",
+            "fontSize": "3rem",
+            "fontWeight": "700",
+            "color": "#0f172a",
+            "align": "center"
+          },
+          {
+            "id": "hero-subtitle",
+            "type": "text",
+            "tag": "p",
+            "content": "Drag, drop si publica in cateva minute.",
+            "fontSize": "1.25rem",
+            "color": "#475569",
+            "align": "center",
+            "margin": "16px 0 32px"
+          },
+          {
+            "id": "hero-btn",
+            "type": "button",
+            "label": "Incepe",
+            "href": "#",
+            "backgroundColor": "#3b82f6",
+            "textColor": "#ffffff",
+            "size": "lg",
+            "borderRadius": "8px"
+          }
+        ]
+      },
+      {
+        "id": "hero-img",
+        "type": "image",
+        "src": "https://example.com/screenshot.png",
+        "alt": "Screenshot aplicatie",
+        "width": "100%",
+        "borderRadius": "12px",
+        "margin": "0 auto"
+      },
+      { "id": "spacer-1", "type": "spacer", "height": 48 },
+      {
+        "id": "about-section",
+        "type": "section",
+        "backgroundColor": "#ffffff",
+        "padding": "64px 24px",
+        "children": [
+          {
+            "id": "about-heading",
+            "type": "text",
+            "tag": "h2",
+            "content": "Despre noi",
+            "fontSize": "2rem",
+            "fontWeight": "600",
+            "align": "center"
+          },
+          { "id": "divider-1", "type": "divider", "color": "#e2e8f0", "thickness": 1, "margin": "24px auto" },
+          {
+            "id": "about-video",
+            "type": "video",
+            "src": "https://example.com/intro.mp4",
+            "controls": true,
+            "muted": true,
+            "width": "100%",
+            "borderRadius": "8px"
+          }
+        ]
+      },
+      {
+        "id": "links-row",
+        "type": "container",
+        "direction": "row",
+        "gap": "16px",
+        "padding": "32px 24px",
+        "children": [
+          { "id": "link-tw", "type": "link", "href": "https://twitter.com/ex", "label": "Twitter", "target": "_blank", "color": "#1d9bf0" },
+          { "id": "link-gh", "type": "link", "href": "https://github.com/ex",  "label": "GitHub",  "target": "_blank", "color": "#0f172a" }
+        ]
+      }
+    ]
+  },
+  "meta": {
+    "title": "Pagina mea",
+    "description": "Cel mai bun page builder.",
+    "lang": "ro",
+    "customCSS": "body { font-family: 'Inter', sans-serif; }",
+    "customJS": "console.log('Pagina incarcata');"
+  }
+}

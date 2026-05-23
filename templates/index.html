@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>IWB</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode:"class",
+      theme:{
+        extend:{
+          colors:{
+            "primary":"#b5c4ff","on-primary":"#00297b",
+            "primary-container":"#648aff","on-primary-container":"#00236d",
+            "primary-fixed":"#dce1ff","primary-fixed-dim":"#b5c4ff",
+            "on-primary-fixed":"#00164d","on-primary-fixed-variant":"#003cad",
+            "secondary":"#bdc6e1","on-secondary":"#273045",
+            "secondary-container":"#3e465d","on-secondary-container":"#acb5cf",
+            "secondary-fixed":"#d9e2fe","secondary-fixed-dim":"#bdc6e1",
+            "on-secondary-fixed":"#121b2f","on-secondary-fixed-variant":"#3e465d",
+            "tertiary":"#ffb786","on-tertiary":"#502400",
+            "tertiary-container":"#df7313","on-tertiary-container":"#461f00",
+            "tertiary-fixed":"#ffdcc6","tertiary-fixed-dim":"#ffb786",
+            "on-tertiary-fixed":"#311300","on-tertiary-fixed-variant":"#723600",
+            "error":"#ffb4ab","on-error":"#690005",
+            "error-container":"#93000a","on-error-container":"#ffdad6",
+            "surface":"#051424","surface-dim":"#051424","surface-bright":"#2c3a4c",
+            "surface-container-lowest":"#010f1f","surface-container-low":"#0d1c2d",
+            "surface-container":"#122131","surface-container-high":"#1c2b3c",
+            "surface-container-highest":"#273647","surface-variant":"#273647",
+            "surface-tint":"#b5c4ff","on-surface":"#d4e4fa","on-surface-variant":"#c3c5d7",
+            "outline":"#8d90a0","outline-variant":"#434654",
+            "inverse-surface":"#d4e4fa","inverse-on-surface":"#233143",
+            "inverse-primary":"#1a53d6","background":"#051424","on-background":"#d4e4fa"
+          },
+          borderRadius:{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},
+          spacing:{"unit":"4px","xs":"4px","sm":"8px","md":"16px","lg":"24px","xl":"48px","sidebar-width":"280px","toolbar-height":"56px","canvas-margin":"32px"},
+          fontFamily:{"h1":["Inter"],"h2":["Inter"],"h3":["Inter"],"body-lg":["Inter"],"body-md":["Inter"],"body-sm":["Inter"],"label-caps":["Inter"],"code-md":["JetBrains Mono"],"code-sm":["JetBrains Mono"]},
+          fontSize:{
+            "h1":["40px",{"lineHeight":"1.2","letterSpacing":"-0.02em","fontWeight":"700"}],
+            "h2":["32px",{"lineHeight":"1.3","letterSpacing":"-0.02em","fontWeight":"600"}],
+            "h3":["24px",{"lineHeight":"1.4","letterSpacing":"-0.01em","fontWeight":"600"}],
+            "body-lg":["18px",{"lineHeight":"1.6","fontWeight":"400"}],
+            "body-md":["16px",{"lineHeight":"1.6","fontWeight":"400"}],
+            "body-sm":["14px",{"lineHeight":"1.5","fontWeight":"400"}],
+            "label-caps":["12px",{"lineHeight":"1","letterSpacing":"0.05em","fontWeight":"600"}],
+            "code-md":["14px",{"lineHeight":"1.5","fontWeight":"400"}],
+            "code-sm":["12px",{"lineHeight":"1.5","fontWeight":"400"}]
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
+    ::-webkit-scrollbar{width:6px;height:6px;}
+    ::-webkit-scrollbar-track{background:transparent;}
+    ::-webkit-scrollbar-thumb{background:#273647;border-radius:4px;}
+    ::-webkit-scrollbar-thumb:hover{background:#434654;}
+    *{box-sizing:border-box;}
+    body{margin:0;}
+    [id=app]{min-height:100vh;}
+  </style>
+</head>
+<body class="bg-background text-on-background">
+  <div id="app"></div>
+
+  <!-- Core -->
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/router.js"></script>
+  <script src="/static/js/toast.js"></script>
+
+  <!-- Pages -->
+  <script src="/static/js/pages/landing.js"></script>
+  <script src="/static/js/pages/auth-page.js"></script>
+  <script src="/static/js/pages/dashboard.js"></script>
+  <script src="/static/js/pages/editor.js"></script>
+  <script src="/static/js/pages/share.js"></script>
+  <script src="/static/js/pages/templates.js"></script>
+  <script src="/static/js/pages/pricing.js"></script>
+
+  <script>
+    router
+      .register('/', renderLanding)
+      .register('/auth', renderAuth)
+      .register('/dashboard', renderDashboard)
+      .register('/editor/:id', renderEditor)
+      .register('/share/:token', renderShare)
+      .register('/pricing', renderPricing)
+      .register('/404', ()=>{
+        document.getElementById('app').innerHTML=`
+        <div class="min-h-screen flex flex-col items-center justify-center bg-background relative overflow-hidden">
+          <div class="absolute inset-0" style="background:radial-gradient(circle at 50% -20%,rgba(100,138,255,.15) 0%,transparent 50%)"></div>
+          <div class="absolute inset-0" style="background-image:radial-gradient(circle,rgba(255,255,255,0.025) 1px,transparent 1px);background-size:24px 24px"></div>
+          <h1 class="text-[120px] font-black leading-none tracking-tighter text-transparent bg-clip-text bg-gradient-to-br from-blue-400 via-primary to-teal-400 z-10">404</h1>
+          <h2 class="font-h2 text-h2 text-on-surface mb-4 z-10">Page not found</h2>
+          <p class="text-on-surface-variant mb-8 z-10 max-w-md text-center">The link might be broken or the page has been moved.</p>
+          <button onclick="router.go('/')" class="px-8 py-3 bg-primary-container text-on-primary-container rounded-DEFAULT font-semibold hover:brightness-110 transition-all z-10 flex items-center gap-2">
+            <span class="material-symbols-outlined text-[18px]">home</span> Go Home
+          </button>
+        </div>`;
+      })
+      .init();
+  </script>
+</body>
+</html>
