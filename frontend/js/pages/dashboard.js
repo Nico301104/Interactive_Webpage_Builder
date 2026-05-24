@@ -1,8 +1,8 @@
 // ── Dashboard Page ────────────────────────────────────────────
 let dashProjects = [];
-let dashSearch = '';
-let dashStatus = '';
-let dashTags = [];
+let dashSearch   = '';
+let dashStatus   = '';
+let dashTags     = [];
 let dashTagFilter = null;
 
 function userIsPro(user) {
@@ -12,121 +12,165 @@ function userIsPro(user) {
 }
 
 async function renderDashboard() {
-  const user = Auth.user || {};
-  const initials = (user.username||user.email||'U').slice(0,1).toUpperCase();
+  const user     = Auth.user || {};
+  const initials = (user.username || user.email || 'U').slice(0,1).toUpperCase();
 
   document.getElementById('app').innerHTML = `
-  <div class="bg-background text-on-background font-body-md min-h-screen overflow-x-hidden">
-    <!-- TopNav -->
-    <nav class="bg-[#111A2E]/80 backdrop-blur-xl fixed top-0 w-full z-50 border-b border-slate-800 shadow-[0px_10px_20px_rgba(0,0,0,0.5)] flex justify-between items-center h-16 px-6">
-      <div class="flex items-center gap-8">
-        <div class="text-xl font-bold tracking-tight text-slate-50 cursor-pointer" onclick="router.go('/')">IWB</div>
-        <div class="hidden md:flex gap-6 items-center h-full">
-          <a onclick="router.go('/dashboard')" class="text-[#4F7CFF] border-b-2 border-[#4F7CFF] pb-1 h-16 flex items-center cursor-pointer">Dashboard</a>
-          <a onclick="openTemplateGallery()" class="text-slate-400 hover:text-slate-200 h-16 flex items-center hover:bg-white/5 transition-all px-3 -mx-3 rounded-md cursor-pointer">Templates</a>
+  <div style="background:#030B14;color:#E8F4FD;font-family:Inter,system-ui,sans-serif;min-height:100vh;overflow-x:hidden">
+
+    <!-- ── TOP NAV ──────────────────────────────────── -->
+    <nav style="background:rgba(3,11,20,.9);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);position:fixed;top:0;width:100%;z-index:50;border-bottom:1px solid rgba(0,229,255,.07);box-shadow:0 0 0 1px rgba(0,229,255,.03),0 10px 40px rgba(0,0,0,.5);display:flex;justify-content:space-between;align-items:center;height:64px;padding:0 24px">
+      <div style="display:flex;align-items:center;gap:28px">
+        <div style="display:flex;align-items:center;gap:9px;cursor:pointer" onclick="router.go('/')">
+          <div style="width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#00C4DD,#006FE8);display:flex;align-items:center;justify-content:center;box-shadow:0 0 14px rgba(0,229,255,.35)">
+            <span class="material-symbols-outlined" style="font-size:17px;color:white;font-variation-settings:'FILL' 1">architecture</span>
+          </div>
+          <span style="font-size:20px;font-weight:900;letter-spacing:-.04em;color:white">IWB</span>
+        </div>
+        <div style="display:flex;gap:2px;align-items:center">
+          <a onclick="router.go('/dashboard')" style="color:#00E5FF;font-size:14px;font-weight:600;padding:8px 14px;border-radius:7px;cursor:pointer;background:rgba(0,229,255,.08);border-bottom:2px solid #00E5FF">Dashboard</a>
+          <a onclick="openTemplateGallery()" style="color:#4B5563;font-size:14px;font-weight:500;padding:8px 14px;border-radius:7px;cursor:pointer;transition:all .15s" onmouseover="this.style.color='#E8F4FD';this.style.background='rgba(255,255,255,.04)'" onmouseout="this.style.color='#4B5563';this.style.background=''">Templates</a>
         </div>
       </div>
-      <div class="flex items-center gap-4">
-        <div class="relative hidden lg:block">
-          <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-sm">search</span>
-          <input id="dash-search" type="text" placeholder="Search projects..." value="${dashSearch}"
-            oninput="dashSearchHandler(this.value)"
-            class="bg-[#0F1729] border border-surface-variant text-on-surface text-body-sm pl-9 pr-4 py-1.5 rounded-DEFAULT focus:outline-none focus:border-primary transition-colors w-64"/>
+      <div style="display:flex;align-items:center;gap:12px">
+        <!-- Search -->
+        <div style="position:relative;display:none" class="lg:block">
+          <span class="material-symbols-outlined" style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:#2D3F52;font-size:17px">search</span>
+          <input id="dash-search" type="text" placeholder="Search projects…" value="${dashSearch}" oninput="dashSearchHandler(this.value)"
+            class="input-cyber" style="padding-left:36px;padding-right:14px;padding-top:8px;padding-bottom:8px;font-size:14px;width:240px;border-radius:9px"/>
         </div>
+        <!-- Plan badge / upgrade -->
         ${userIsPro(user)
-          ? `<span style="background:rgba(79,124,255,.15);color:#4F7CFF;border:1px solid rgba(79,124,255,.3);padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.07em">${user.plan.toUpperCase()}</span>`
-          : `<button onclick="router.go('/pricing')" class="bg-[#4F7CFF] text-white hover:shadow-[0_0_10px_rgba(79,124,255,0.5)] px-4 py-1.5 rounded-DEFAULT text-body-sm font-medium transition-all active:scale-95 flex items-center gap-1"><span class="material-symbols-outlined text-[15px]">star</span> Upgrade</button>`
+          ? `<span style="background:rgba(0,229,255,.1);color:#00E5FF;border:1px solid rgba(0,229,255,.25);padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.07em">${user.plan.toUpperCase()}</span>`
+          : `<button onclick="router.go('/pricing')" class="btn-neon" style="border:none;color:white;padding:7px 16px;border-radius:8px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;font-family:Inter,sans-serif"><span class="material-symbols-outlined" style="font-size:15px">star</span> Upgrade</button>`
         }
-        <div class="h-6 w-px bg-slate-800 mx-2"></div>
-        <div class="relative group">
-          <div class="h-8 w-8 rounded-full bg-primary-container flex items-center justify-center border border-outline-variant ml-2 cursor-pointer">${initials}</div>
-          <div class="absolute right-0 top-10 hidden group-hover:block bg-surface-container-high border border-outline-variant rounded-xl shadow-xl p-2 min-w-[200px] z-50">
-            <div class="px-3 py-2 border-b border-outline-variant mb-1">
-              <div class="text-sm font-semibold text-on-surface">${user.username||'User'}</div>
-              <div class="text-xs text-on-surface-variant">${user.plan||'free'} plan</div>
+        <div style="width:1px;height:24px;background:rgba(255,255,255,.06)"></div>
+        <!-- Avatar + dropdown -->
+        <div style="position:relative" id="avatar-wrap">
+          <div onclick="toggleAvatarMenu()" style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#00C4DD,#006FE8);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;font-weight:700;color:white;box-shadow:0 0 14px rgba(0,229,255,.25)">${initials}</div>
+          <div id="avatar-menu" style="display:none;position:absolute;right:0;top:44px;background:#071220;border:1px solid rgba(0,229,255,.1);border-radius:14px;box-shadow:0 24px 64px rgba(0,0,0,.7);padding:8px;min-width:210px;z-index:100">
+            <div style="padding:10px 14px 12px;border-bottom:1px solid rgba(255,255,255,.05);margin-bottom:4px">
+              <div style="font-size:14px;font-weight:700;color:#E8F4FD">${user.username||'User'}</div>
+              <div style="font-size:12px;color:#374151;margin-top:2px">${user.plan||'free'} plan</div>
             </div>
-            <button onclick="router.go('/pricing')" class="w-full text-left px-3 py-2 text-sm text-on-surface-variant hover:bg-white/5 rounded-lg transition-colors flex items-center gap-2">
-              <span class="material-symbols-outlined text-[16px]">star</span> Upgrade plan
+            <button onclick="router.go('/pricing')" style="width:100%;text-align:left;padding:9px 14px;font-size:13px;color:#94A3B8;background:none;border:none;cursor:pointer;border-radius:8px;display:flex;align-items:center;gap:9px;font-family:Inter,sans-serif;transition:all .15s" onmouseover="this.style.background='rgba(255,255,255,.04)';this.style.color='#E8F4FD'" onmouseout="this.style.background='';this.style.color='#94A3B8'">
+              <span class="material-symbols-outlined" style="font-size:17px">star</span> Upgrade plan
             </button>
-            <button onclick="Auth.logout()" class="w-full text-left px-3 py-2 text-sm text-error hover:bg-error/10 rounded-lg transition-colors flex items-center gap-2">
-              <span class="material-symbols-outlined text-[16px]">logout</span> Sign out
+            <button onclick="Auth.logout()" style="width:100%;text-align:left;padding:9px 14px;font-size:13px;color:#ff6b6b;background:none;border:none;cursor:pointer;border-radius:8px;display:flex;align-items:center;gap:9px;font-family:Inter,sans-serif;transition:all .15s" onmouseover="this.style.background='rgba(255,107,107,.08)'" onmouseout="this.style.background=''">
+              <span class="material-symbols-outlined" style="font-size:17px">logout</span> Sign out
             </button>
           </div>
         </div>
       </div>
     </nav>
-    <!-- Sidebar -->
-    <aside class="bg-[#111A2E] font-['JetBrains_Mono'] text-xs uppercase tracking-widest h-screen w-64 border-r border-slate-800 fixed left-0 top-0 flex flex-col py-4 z-40 pt-20">
-      <div class="px-6 mb-8 flex items-center gap-3">
-        <div class="w-8 h-8 rounded-DEFAULT bg-primary-container flex items-center justify-center">
-          <span class="material-symbols-outlined text-on-primary-container text-[18px]" style="font-variation-settings:'FILL' 1">architecture</span>
-        </div>
-        <div>
-          <div class="text-slate-50 font-semibold text-sm capitalize tracking-normal flex items-center gap-2">
-            ${user.username||'User'}
-            ${userIsPro(user) ? `<span style="background:rgba(79,124,255,.2);color:#4F7CFF;font-size:9px;font-weight:700;padding:1px 6px;border-radius:10px;letter-spacing:.06em">${user.plan.toUpperCase()}</span>` : ''}
+
+    <!-- ── SIDEBAR ───────────────────────────────────── -->
+    <aside style="background:#060F1A;border-right:1px solid rgba(0,229,255,.07);position:fixed;left:0;top:0;width:256px;height:100vh;display:flex;flex-direction:column;padding:80px 12px 16px;z-index:40">
+      <!-- User info -->
+      <div style="padding:0 8px 20px;margin-bottom:12px;border-bottom:1px solid rgba(255,255,255,.04)">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#00C4DD,#006FE8);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:white;flex-shrink:0;box-shadow:0 0 12px rgba(0,229,255,.25)">${initials}</div>
+          <div style="min-width:0">
+            <div style="font-size:13px;font-weight:700;color:#E8F4FD;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:6px">
+              ${user.username||'User'}
+              ${userIsPro(user)?`<span style="background:rgba(0,229,255,.1);color:#00E5FF;font-size:9px;font-weight:700;padding:1px 6px;border-radius:10px;letter-spacing:.06em">${user.plan.toUpperCase()}</span>`:''}
+            </div>
+            <div style="font-size:11px;color:#2D3F52;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${user.email||''}</div>
           </div>
-          <div class="text-slate-500 text-[10px]">${user.email||''}</div>
         </div>
       </div>
-      <nav class="flex-1 px-3 space-y-1">
-        <a class="flex items-center gap-3 px-3 py-2.5 rounded-DEFAULT bg-[#4F7CFF]/10 text-[#4F7CFF] border-r-2 border-[#4F7CFF]">
-          <span class="material-symbols-outlined text-[18px]" style="font-variation-settings:'FILL' 1">grid_view</span><span>Projects</span>
+
+      <!-- Nav items -->
+      <nav style="flex:1;display:flex;flex-direction:column;gap:2px">
+        <a class="sidebar-item sidebar-active" style="display:flex;align-items:center;gap:10px;padding:9px 12px;font-size:13px;font-weight:600;cursor:pointer;letter-spacing:.01em;border-left:2px solid #00E5FF !important">
+          <span class="material-symbols-outlined" style="font-size:18px;color:#00E5FF;font-variation-settings:'FILL' 1">grid_view</span>
+          <span>Projects</span>
         </a>
-        <a onclick="openTemplateGallery()" class="flex items-center gap-3 px-3 py-2.5 rounded-DEFAULT text-slate-500 hover:bg-slate-800/50 hover:text-slate-300 transition-colors cursor-pointer">
-          <span class="material-symbols-outlined text-[18px]">auto_awesome</span><span>Templates</span>
+        <a onclick="openTemplateGallery()" class="sidebar-item" style="display:flex;align-items:center;gap:10px;padding:9px 12px;font-size:13px;font-weight:500;color:#4B5563;cursor:pointer;border-left:2px solid transparent">
+          <span class="material-symbols-outlined" style="font-size:18px">auto_awesome</span>
+          <span>Templates</span>
         </a>
         ${buildTagSidebarSection()}
-        <a onclick="router.go('/pricing')" class="flex items-center gap-3 px-3 py-2.5 rounded-DEFAULT text-slate-500 hover:bg-slate-800/50 hover:text-slate-300 transition-colors cursor-pointer">
-          <span class="material-symbols-outlined text-[18px]">star</span><span>Upgrade</span>
+        <a onclick="router.go('/pricing')" class="sidebar-item" style="display:flex;align-items:center;gap:10px;padding:9px 12px;font-size:13px;font-weight:500;color:#4B5563;cursor:pointer;border-left:2px solid transparent">
+          <span class="material-symbols-outlined" style="font-size:18px">star</span>
+          <span>Upgrade</span>
         </a>
       </nav>
-      <div class="mt-auto px-3 space-y-1 border-t border-slate-800/50 pt-4">
-        <a onclick="Auth.logout()" class="flex items-center gap-3 px-3 py-2.5 rounded-DEFAULT text-error/60 hover:bg-error/10 hover:text-error transition-colors cursor-pointer">
-          <span class="material-symbols-outlined text-[18px]">logout</span><span>Sign out</span>
+
+      <!-- Sign out -->
+      <div style="border-top:1px solid rgba(255,255,255,.04);padding-top:12px;margin-top:8px">
+        <a onclick="Auth.logout()" class="sidebar-item" style="display:flex;align-items:center;gap:10px;padding:9px 12px;font-size:13px;font-weight:500;color:rgba(255,107,107,.5);cursor:pointer;border-left:2px solid transparent;border-radius:8px" onmouseover="this.style.color='#ff6b6b';this.style.background='rgba(255,107,107,.07)'" onmouseout="this.style.color='rgba(255,107,107,.5)';this.style.background=''">
+          <span class="material-symbols-outlined" style="font-size:18px">logout</span>
+          <span>Sign out</span>
         </a>
       </div>
     </aside>
-    <!-- Main -->
-    <main class="ml-64 pt-16 p-canvas-margin">
-      <header class="flex justify-between items-center mb-8 mt-6">
-        <div>
-          <h1 class="text-2xl font-bold text-white">Projects</h1>
-          <p class="text-slate-400 text-sm mt-1">Manage and access your web workspaces.</p>
+
+    <!-- ── MAIN CONTENT ──────────────────────────────── -->
+    <main style="margin-left:256px;padding-top:64px">
+      <div style="padding:32px">
+        <!-- Header row -->
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;flex-wrap:wrap;gap:16px">
+          <div>
+            <h1 style="font-size:26px;font-weight:900;color:#E8F4FD;margin:0 0 4px;letter-spacing:-.03em">Projects</h1>
+            <p style="color:#374151;font-size:14px;margin:0">Manage and access your web workspaces.</p>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <select id="dash-status-filter" onchange="dashFilterHandler(this.value)"
+              style="background:#060F1A;border:1px solid rgba(255,255,255,.07);color:#94A3B8;font-size:13px;padding:9px 14px;border-radius:9px;outline:none;font-family:Inter,sans-serif;cursor:pointer">
+              <option value="">All Status</option>
+              <option value="draft">Draft</option>
+              <option value="published">Published</option>
+              <option value="archived">Archived</option>
+            </select>
+            <button onclick="openNewProjectModal()" class="btn-neon"
+              style="border:none;color:white;padding:9px 20px;border-radius:9px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:7px;font-family:Inter,sans-serif;letter-spacing:-.01em">
+              <span class="material-symbols-outlined" style="font-size:18px">add</span> New Project
+            </button>
+          </div>
         </div>
-        <div class="flex items-center gap-3">
-          <select id="dash-status-filter" onchange="dashFilterHandler(this.value)"
-            class="bg-[#0F1729] border border-outline-variant text-on-surface text-body-sm px-3 py-1.5 rounded-DEFAULT focus:outline-none focus:border-primary">
-            <option value="">All Status</option>
-            <option value="draft">Draft</option>
-            <option value="published">Published</option>
-            <option value="archived">Archived</option>
-          </select>
-          <button onclick="openNewProjectModal()"
-            class="bg-[#4F7CFF] text-white px-4 py-2 rounded-DEFAULT text-sm font-medium hover:shadow-[0_0_10px_rgba(79,124,255,0.5)] transition-all active:scale-95 flex items-center gap-2">
-            <span class="material-symbols-outlined text-[18px]">add</span> New Project
-          </button>
+
+        <!-- Mobile search -->
+        <div style="position:relative;margin-bottom:20px;display:block" class="lg:hidden">
+          <span class="material-symbols-outlined" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#2D3F52;font-size:17px">search</span>
+          <input id="dash-search-mobile" type="text" placeholder="Search projects…" value="${dashSearch}" oninput="dashSearchHandler(this.value)"
+            class="input-cyber" style="padding-left:38px;font-size:14px;width:100%;border-radius:9px"/>
         </div>
-      </header>
-      <!-- Grid -->
-      <div id="projects-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div class="col-span-3 text-center py-20">
-          <div class="inline-block w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-          <p class="text-slate-400 mt-4 text-sm">Loading projects…</p>
+
+        <!-- Projects grid -->
+        <div id="projects-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px">
+          <div style="grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 0;gap:16px">
+            <div class="iwb-spinner"></div>
+            <p style="color:#374151;font-size:14px;margin:0">Loading projects…</p>
+          </div>
         </div>
       </div>
     </main>
   </div>`;
 
+  // Close avatar menu when clicking outside
+  document.addEventListener('click', function onOutsideClick(e) {
+    const wrap = document.getElementById('avatar-wrap');
+    if (wrap && !wrap.contains(e.target)) {
+      const menu = document.getElementById('avatar-menu');
+      if (menu) menu.style.display = 'none';
+    }
+  });
+
   await loadProjects();
   await loadTags();
 }
 
+function toggleAvatarMenu() {
+  const menu = document.getElementById('avatar-menu');
+  if (menu) menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+}
+
 async function loadProjects() {
   const params = {};
-  if (dashSearch) params.search = dashSearch;
-  if (dashStatus) params.status = dashStatus;
-  if (dashTagFilter) params.tag = dashTagFilter;
+  if (dashSearch)   params.search  = dashSearch;
+  if (dashStatus)   params.status  = dashStatus;
+  if (dashTagFilter) params.tag    = dashTagFilter;
   params.ordering = '-updated_at';
 
   const data = await projectsAPI.list(params);
@@ -137,80 +181,108 @@ async function loadProjects() {
 function renderProjectGrid() {
   const grid = document.getElementById('projects-grid');
   if (!grid) return;
+
   let html = '';
 
   // New project card
   html += `
-    <div onclick="openNewProjectModal()" class="border-2 border-dashed border-[#1F2A44] rounded-xl aspect-[4/3] flex flex-col items-center justify-center cursor-pointer hover:border-[#4F7CFF] hover:bg-[#4F7CFF]/5 transition-all group">
-      <div class="w-12 h-12 rounded-xl bg-[#4F7CFF]/10 flex items-center justify-center mb-3 group-hover:bg-[#4F7CFF]/20 transition-colors">
-        <span class="material-symbols-outlined text-[#4F7CFF] text-[28px]">add</span>
+    <div onclick="openNewProjectModal()" class="card-3d" onmousemove="tilt(this,event)" onmouseleave="untilt(this)"
+      style="border:2px dashed rgba(0,229,255,.15);border-radius:16px;aspect-ratio:4/3;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .3s ease;background:rgba(0,229,255,.02)"
+      onmouseover="this.style.borderColor='rgba(0,229,255,.4)';this.style.background='rgba(0,229,255,.05)'"
+      onmouseout="this.style.borderColor='rgba(0,229,255,.15)';this.style.background='rgba(0,229,255,.02)'">
+      <div style="width:52px;height:52px;border-radius:14px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.15);display:flex;align-items:center;justify-content:center;margin-bottom:12px;box-shadow:0 0 20px rgba(0,229,255,.1)">
+        <span class="material-symbols-outlined" style="color:#00E5FF;font-size:28px">add</span>
       </div>
-      <span class="text-white font-semibold text-sm">New Project</span>
-      <span class="text-slate-500 text-xs mt-1">Start from scratch or a template</span>
+      <span style="color:#E8F4FD;font-weight:700;font-size:14px">New Project</span>
+      <span style="color:#374151;font-size:12px;margin-top:4px">Start from scratch or a template</span>
     </div>`;
 
   if (dashProjects.length === 0) {
-    html += `<div class="col-span-2 flex flex-col items-center justify-center py-20 text-center">
-      <span class="material-symbols-outlined text-slate-600 text-[64px] mb-4">folder_open</span>
-      <h3 class="text-white font-semibold text-lg mb-2">No projects yet</h3>
-      <p class="text-slate-400 text-sm">Create your first project to get started.</p>
-    </div>`;
+    html += `
+      <div style="grid-column:2/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 0;text-align:center">
+        <span class="material-symbols-outlined" style="color:#1F2D3D;font-size:64px;margin-bottom:16px">folder_open</span>
+        <h3 style="color:#E8F4FD;font-weight:700;font-size:18px;margin:0 0 8px">No projects yet</h3>
+        <p style="color:#374151;font-size:14px;margin:0">Create your first project to get started.</p>
+      </div>`;
   } else {
     for (const p of dashProjects) {
       const updated = timeAgo(p.updated_at);
-      const statusColor = { draft:'text-slate-400 bg-slate-800', published:'text-emerald-400 bg-emerald-900/40', archived:'text-amber-400 bg-amber-900/40' }[p.status] || 'text-slate-400 bg-slate-800';
-      const statusLabel = p.status?.charAt(0).toUpperCase() + p.status?.slice(1) || 'Draft';
+      const statusStyles = {
+        draft:     { color:'#94A3B8', bg:'rgba(148,163,184,.1)',  border:'rgba(148,163,184,.2)' },
+        published: { color:'#22C55E', bg:'rgba(34,197,94,.1)',    border:'rgba(34,197,94,.2)'  },
+        archived:  { color:'#F59E0B', bg:'rgba(245,158,11,.1)',   border:'rgba(245,158,11,.2)' },
+      }[p.status] || { color:'#94A3B8', bg:'rgba(148,163,184,.1)', border:'rgba(148,163,184,.2)' };
+      const statusLabel = (p.status||'draft').charAt(0).toUpperCase() + (p.status||'draft').slice(1);
+
       html += `
-        <div class="bg-[#111A2E] border border-[#1F2A44] rounded-xl overflow-hidden hover:border-[#2A3A58] hover:shadow-lg hover:-translate-y-0.5 transition-all group cursor-pointer" onclick="router.go('/editor/${p.id}')">
+        <div class="card-3d" onmousemove="tilt(this,event)" onmouseleave="untilt(this)"
+          style="background:#060F1A;border:1px solid rgba(255,255,255,.06);border-radius:16px;overflow:hidden;cursor:pointer;transition:border-color .3s,box-shadow .3s"
+          onclick="router.go('/editor/${p.id}')"
+          onmouseover="this.style.borderColor='rgba(0,229,255,.2)';this.style.boxShadow='0 20px 60px rgba(0,0,0,.5),0 0 30px rgba(0,229,255,.04)'"
+          onmouseout="this.style.borderColor='rgba(255,255,255,.06)';this.style.boxShadow=''">
           <!-- Thumbnail -->
-          <div class="h-44 bg-[#0B1220] relative overflow-hidden flex items-center justify-center">
+          <div style="height:168px;background:#030B14;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center">
             ${renderMiniPreview(p)}
-            <span class="absolute top-3 right-3 text-[10px] font-semibold uppercase tracking-wider px-2 py-1 rounded ${statusColor}">${statusLabel}</span>
+            <!-- Status badge -->
+            <span style="position:absolute;top:12px;right:12px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;padding:3px 10px;border-radius:100px;background:${statusStyles.bg};color:${statusStyles.color};border:1px solid ${statusStyles.border}">${statusLabel}</span>
             <!-- Hover actions -->
-            <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-end">
-              <div class="w-full flex gap-2 p-3 justify-end" onclick="event.stopPropagation()">
-                <button onclick="event.stopPropagation();router.go('/editor/${p.id}')" title="Edit" class="w-8 h-8 bg-[#4F7CFF] text-white rounded-lg flex items-center justify-center hover:brightness-110 transition-all">
-                  <span class="material-symbols-outlined text-[16px]">edit</span>
+            <div style="position:absolute;inset:0;background:rgba(3,11,20,.75);opacity:0;transition:opacity .2s;display:flex;align-items:flex-end" class="hover-actions" onclick="event.stopPropagation()"
+              onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0">
+              <div style="width:100%;display:flex;gap:8px;padding:12px;justify-content:flex-end">
+                <button onclick="event.stopPropagation();router.go('/editor/${p.id}')" title="Edit"
+                  style="width:34px;height:34px;background:linear-gradient(135deg,#00C4DD,#006FE8);border:none;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 0 14px rgba(0,229,255,.3)">
+                  <span class="material-symbols-outlined" style="font-size:16px;color:white">edit</span>
                 </button>
-                <button onclick="event.stopPropagation();dupProject('${p.id}')" title="Duplicate" class="w-8 h-8 bg-surface-container-high border border-outline-variant text-on-surface rounded-lg flex items-center justify-center hover:bg-surface-bright transition-all">
-                  <span class="material-symbols-outlined text-[16px]">content_copy</span>
+                <button onclick="event.stopPropagation();dupProject('${p.id}')" title="Duplicate"
+                  style="width:34px;height:34px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center">
+                  <span class="material-symbols-outlined" style="font-size:16px;color:#94A3B8">content_copy</span>
                 </button>
-                <button onclick="event.stopPropagation();delProject('${p.id}','${escHtml(p.title)}')" title="Delete" class="w-8 h-8 bg-error/20 text-error border border-error/30 rounded-lg flex items-center justify-center hover:bg-error/30 transition-all">
-                  <span class="material-symbols-outlined text-[16px]">delete</span>
+                <button onclick="event.stopPropagation();delProject('${p.id}','${escHtml(p.title)}')" title="Delete"
+                  style="width:34px;height:34px;background:rgba(255,107,107,.1);border:1px solid rgba(255,107,107,.25);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center">
+                  <span class="material-symbols-outlined" style="font-size:16px;color:#ff6b6b">delete</span>
                 </button>
               </div>
             </div>
           </div>
           <!-- Card body -->
-          <div class="p-4">
-            <h3 class="text-white font-semibold text-sm truncate mb-1">${escHtml(p.title)}</h3>
-            <p class="text-slate-500 text-xs truncate mb-3">${escHtml(p.description||'No description')}</p>
-            <div class="flex items-center justify-between text-slate-500 text-xs">
-              <span class="flex items-center gap-1">
-                <span class="material-symbols-outlined text-[14px]">schedule</span> ${updated}
+          <div style="padding:16px">
+            <h3 style="color:#E8F4FD;font-weight:700;font-size:14px;margin:0 0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(p.title)}</h3>
+            <p style="color:#374151;font-size:12px;margin:0 0 12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(p.description||'No description')}</p>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="display:flex;align-items:center;gap:5px;color:#2D3F52;font-size:12px">
+                <span class="material-symbols-outlined" style="font-size:14px">schedule</span> ${updated}
               </span>
-              <span class="flex items-center gap-1">
-                <span class="material-symbols-outlined text-[14px]">history</span> ${p.version_count||0} versions
+              <span style="display:flex;align-items:center;gap:5px;color:#2D3F52;font-size:12px">
+                <span class="material-symbols-outlined" style="font-size:14px">history</span> ${p.version_count||0}v
               </span>
             </div>
-            ${p.tags?.length ? `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px">
-              ${p.tags.map(t=>`<span style="background:${t.color}22;color:${t.color};font-size:10px;font-weight:600;padding:2px 8px;border-radius:4px">${escHtml(t.name)}</span>`).join('')}
+            ${p.tags?.length ? `<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:10px">
+              ${p.tags.map(t=>`<span style="background:${t.color}18;color:${t.color};font-size:10px;font-weight:600;padding:2px 8px;border-radius:100px;border:1px solid ${t.color}30">${escHtml(t.name)}</span>`).join('')}
             </div>` : ''}
           </div>
         </div>`;
     }
   }
+
   grid.innerHTML = html;
+
+  // Re-attach hover actions visibility with JS (works even though we set opacity via mouse events)
+  grid.querySelectorAll('.hover-actions').forEach(el => {
+    const card = el.closest('[onmouseover]');
+    if (!card) return;
+    card.addEventListener('mouseenter', () => { el.style.opacity = '1'; });
+    card.addEventListener('mouseleave', () => { el.style.opacity = '0'; });
+  });
 }
 
 function renderMiniPreview(p) {
   const comps = p.layout?.components || [];
-  const types = comps.map(c=>c.type);
+  const types = comps.map(c => c.type);
   let preview = '';
-  if (types.includes('navbar')) preview += '<div style="height:24px;background:#0F1729;border-bottom:1px solid #1F2A44;width:100%"></div>';
-  if (types.includes('hero')) preview += '<div style="height:60px;background:linear-gradient(135deg,#111A2E,#0B1220);width:100%"></div>';
-  if (types.includes('features')) preview += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:8px"><div style="height:32px;background:#1c2b3c;border-radius:4px"></div><div style="height:32px;background:#1c2b3c;border-radius:4px"></div><div style="height:32px;background:#1c2b3c;border-radius:4px"></div></div>';
-  if (!preview) preview = `<div style="display:flex;flex-direction:column;gap:8px;padding:16px;width:100%"><div style="height:8px;background:#1F2A44;border-radius:4px;width:60%"></div><div style="height:6px;background:#1F2A44;border-radius:4px;width:90%;opacity:.6"></div><div style="height:6px;background:#1F2A44;border-radius:4px;width:75%;opacity:.6"></div></div>`;
+  if (types.includes('navbar'))   preview += '<div style="height:22px;background:#060F1A;border-bottom:1px solid rgba(0,229,255,.08);width:100%"></div>';
+  if (types.includes('hero'))     preview += '<div style="height:56px;background:linear-gradient(135deg,rgba(0,229,255,.05),rgba(79,124,255,.05));width:100%;border-top:1px solid rgba(0,229,255,.06)"></div>';
+  if (types.includes('features')) preview += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;padding:8px"><div style="height:28px;background:rgba(0,229,255,.04);border:1px solid rgba(0,229,255,.07);border-radius:4px"></div><div style="height:28px;background:rgba(0,229,255,.04);border:1px solid rgba(0,229,255,.07);border-radius:4px"></div><div style="height:28px;background:rgba(0,229,255,.04);border:1px solid rgba(0,229,255,.07);border-radius:4px"></div></div>';
+  if (!preview) preview = `<div style="display:flex;flex-direction:column;gap:7px;padding:18px;width:100%"><div style="height:7px;background:rgba(0,229,255,.07);border-radius:4px;width:55%"></div><div style="height:5px;background:rgba(255,255,255,.04);border-radius:4px;width:85%"></div><div style="height:5px;background:rgba(255,255,255,.04);border-radius:4px;width:70%"></div></div>`;
   return `<div style="width:100%;height:100%;display:flex;flex-direction:column;overflow:hidden">${preview}</div>`;
 }
 
@@ -226,43 +298,42 @@ async function dupProject(id) {
 async function delProject(id, title) {
   showConfirm(`Delete project "<strong>${title}</strong>"? This cannot be undone.`, async ()=>{
     const r = await projectsAPI.delete(id);
-    if (r?.ok !== false) { showToast('Project deleted','success'); await loadProjects(); }
+    if (r?.ok === true) { showToast('Project deleted','success'); await loadProjects(); }
     else showToast('Failed to delete','error');
   }, true);
 }
 
 // ── New Project Modal ─────────────────────────────────────────
 function openNewProjectModal() {
+  document.getElementById('new-project-modal')?.remove();
   const m = document.createElement('div');
   m.id = 'new-project-modal';
-  m.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center';
+  m.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(3,11,20,.85);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:16px';
+  m.onclick = e => { if (e.target === m) m.remove(); };
   m.innerHTML = `
-    <div style="background:#111A2E;border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:32px;width:480px;box-shadow:0 32px 80px rgba(0,0,0,0.6)">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
-        <h2 style="color:#E5E7EB;font-size:20px;font-weight:600;font-family:Inter">New Project</h2>
-        <button onclick="document.getElementById('new-project-modal').remove()" style="background:none;border:none;color:#94A3B8;cursor:pointer;font-size:20px">&times;</button>
+    <div style="background:#071220;border:1px solid rgba(0,229,255,.12);border-radius:20px;padding:36px;width:100%;max-width:480px;box-shadow:0 40px 100px rgba(0,0,0,.7),0 0 60px rgba(0,229,255,.04);position:relative;overflow:hidden" onclick="event.stopPropagation()">
+      <div style="position:absolute;top:0;left:25%;right:25%;height:1px;background:linear-gradient(90deg,transparent,rgba(0,229,255,.4),transparent)"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:28px">
+        <h2 style="color:#E8F4FD;font-size:20px;font-weight:800;letter-spacing:-.03em;margin:0">New Project</h2>
+        <button onclick="document.getElementById('new-project-modal').remove()" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:#94A3B8;cursor:pointer;font-size:18px;line-height:1;width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:Inter,sans-serif">&times;</button>
       </div>
-      <div style="display:flex;flex-direction:column;gap:16px">
+      <div style="display:flex;flex-direction:column;gap:18px">
         <div>
-          <label style="display:block;color:#94A3B8;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;font-family:Inter">Project Name</label>
-          <input id="new-project-name" type="text" placeholder="My Awesome Page" autofocus
-            style="width:100%;background:#0F1729;border:1px solid #1F2A44;border-radius:8px;padding:10px 14px;color:#E5E7EB;font-size:15px;font-family:Inter;outline:none;box-sizing:border-box"
-            onfocus="this.style.borderColor='#4F7CFF'"
-            onblur="this.style.borderColor='#1F2A44'"/>
+          <label style="display:block;color:#374151;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;margin-bottom:7px;font-family:Inter,sans-serif">Project Name</label>
+          <input id="new-project-name" type="text" placeholder="My Awesome Page" autofocus class="input-cyber" style="font-size:15px"/>
         </div>
         <div>
-          <label style="display:block;color:#94A3B8;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;font-family:Inter">Description (optional)</label>
-          <textarea id="new-project-desc" placeholder="What is this project about?" rows="2"
-            style="width:100%;background:#0F1729;border:1px solid #1F2A44;border-radius:8px;padding:10px 14px;color:#E5E7EB;font-size:15px;font-family:Inter;outline:none;resize:none;box-sizing:border-box"
-            onfocus="this.style.borderColor='#4F7CFF'"
-            onblur="this.style.borderColor='#1F2A44'"></textarea>
+          <label style="display:block;color:#374151;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;margin-bottom:7px;font-family:Inter,sans-serif">Description (optional)</label>
+          <textarea id="new-project-desc" placeholder="What is this project about?" rows="2" class="input-cyber" style="font-size:15px;resize:none;height:72px"></textarea>
         </div>
-        <div id="new-project-error" style="display:none;color:#EF4444;font-size:13px;font-family:Inter"></div>
-        <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:8px">
+        <div id="new-project-error" style="display:none;background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.25);border-radius:8px;padding:10px 14px;color:#ff6b6b;font-size:13px;font-family:Inter,sans-serif"></div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:4px">
           <button onclick="document.getElementById('new-project-modal').remove()"
-            style="padding:10px 20px;border:1px solid #1F2A44;background:transparent;color:#E5E7EB;border-radius:8px;cursor:pointer;font-family:Inter;font-size:14px">Cancel</button>
-          <button id="create-project-btn" onclick="createProject()"
-            style="padding:10px 24px;background:linear-gradient(135deg,#5A84FF,#4F7CFF,#4267E8);color:white;border:none;border-radius:8px;cursor:pointer;font-family:Inter;font-size:14px;font-weight:600;box-shadow:0 0 20px rgba(79,124,255,0.3)">
+            style="padding:11px 22px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);color:#94A3B8;border-radius:10px;cursor:pointer;font-family:Inter,sans-serif;font-size:14px;font-weight:500;transition:all .2s"
+            onmouseover="this.style.borderColor='rgba(255,255,255,.15)';this.style.color='#E8F4FD'"
+            onmouseout="this.style.borderColor='rgba(255,255,255,.08)';this.style.color='#94A3B8'">Cancel</button>
+          <button id="create-project-btn" onclick="createProject()" class="btn-neon"
+            style="padding:11px 26px;border:none;color:white;border-radius:10px;cursor:pointer;font-family:Inter,sans-serif;font-size:14px;font-weight:700;letter-spacing:-.01em">
             Create Project
           </button>
         </div>
@@ -274,10 +345,10 @@ function openNewProjectModal() {
 }
 
 async function createProject() {
-  const name = document.getElementById('new-project-name')?.value?.trim();
-  const desc = document.getElementById('new-project-desc')?.value?.trim();
+  const name  = document.getElementById('new-project-name')?.value?.trim();
+  const desc  = document.getElementById('new-project-desc')?.value?.trim();
   const errEl = document.getElementById('new-project-error');
-  const btn = document.getElementById('create-project-btn');
+  const btn   = document.getElementById('create-project-btn');
   if (!name) { errEl.textContent='Project name is required'; errEl.style.display='block'; return; }
   btn.textContent='Creating…'; btn.disabled=true;
   const data = await projectsAPI.create({ title:name, description:desc||'', layout:{components:[]}, meta:{} });
@@ -287,7 +358,7 @@ async function createProject() {
     router.go(`/editor/${data.id}`);
   } else {
     errEl.textContent = parseError(data) || 'Failed to create project';
-    errEl.style.display='block';
+    errEl.style.display = 'block';
     btn.textContent='Create Project'; btn.disabled=false;
   }
 }
@@ -296,8 +367,8 @@ function openTemplateGallery() { window.renderTemplateGallery?.(); }
 
 function timeAgo(iso) {
   const diff = (Date.now() - new Date(iso)) / 1000;
-  if (diff<60) return 'just now';
-  if (diff<3600) return Math.floor(diff/60)+'m ago';
+  if (diff<60)    return 'just now';
+  if (diff<3600)  return Math.floor(diff/60)+'m ago';
   if (diff<86400) return Math.floor(diff/3600)+'h ago';
   return Math.floor(diff/86400)+'d ago';
 }
@@ -306,24 +377,25 @@ function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&
 
 // ── Tag sidebar section ───────────────────────────────────────
 function buildTagSidebarSection() {
-  return `<div id="sidebar-tags" style="margin-top:16px;padding:0 12px">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding:0 4px">
-      <span style="color:#4B5563;font-size:10px;text-transform:uppercase;letter-spacing:.08em">Tags</span>
-      <button onclick="openNewTagModal()" style="background:none;border:none;color:#4B5563;cursor:pointer;font-size:18px;line-height:1;padding:2px 4px" title="New tag">+</button>
+  return `<div id="sidebar-tags" style="margin-top:8px;padding:0 0 4px">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 12px 4px;margin-bottom:4px">
+      <span style="color:#2D3F52;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em">Tags</span>
+      <button onclick="openNewTagModal()" style="background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.15);color:#00E5FF;cursor:pointer;font-size:16px;line-height:1;padding:2px 7px;border-radius:6px;font-family:Inter,sans-serif;transition:all .15s" title="New tag"
+        onmouseover="this.style.background='rgba(0,229,255,.15)'" onmouseout="this.style.background='rgba(0,229,255,.08)'">+</button>
     </div>
     ${dashTags.length === 0
-      ? `<p style="color:#374151;font-size:11px;padding:0 4px">No tags yet</p>`
+      ? `<p style="color:#2D3F52;font-size:12px;padding:4px 14px">No tags yet</p>`
       : dashTags.map(tag=>`
-          <div onclick="setTagFilter('${tag.id}')"
-            style="display:flex;align-items:center;justify-content:space-between;padding:6px 8px;border-radius:8px;cursor:pointer;margin-bottom:2px;background:${dashTagFilter===tag.id?'rgba(79,124,255,.1)':'transparent'}">
-            <div style="display:flex;align-items:center;gap:8px">
-              <span style="width:8px;height:8px;border-radius:50%;background:${tag.color};flex-shrink:0"></span>
-              <span style="color:${dashTagFilter===tag.id?'#E5E7EB':'#94A3B8'};font-size:12px">${escHtml(tag.name)}</span>
-            </div>
-            <button onclick="event.stopPropagation();deleteTag('${tag.id}')"
-              style="background:none;border:none;color:#374151;cursor:pointer;font-size:14px;line-height:1;opacity:0;transition:opacity .15s"
-              onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0">×</button>
-          </div>`).join('')}
+        <div onclick="setTagFilter('${tag.id}')" class="sidebar-item"
+          style="display:flex;align-items:center;justify-content:space-between;padding:7px 12px;cursor:pointer;border-left:2px solid ${dashTagFilter===tag.id?tag.color:'transparent'};background:${dashTagFilter===tag.id?`${tag.color}10`:'transparent'}">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="width:8px;height:8px;border-radius:50%;background:${tag.color};box-shadow:0 0 8px ${tag.color}60;flex-shrink:0"></span>
+            <span style="color:${dashTagFilter===tag.id?'#E8F4FD':'#4B5563'};font-size:13px;font-weight:500">${escHtml(tag.name)}</span>
+          </div>
+          <button onclick="event.stopPropagation();deleteTag('${tag.id}')"
+            style="background:none;border:none;color:#374151;cursor:pointer;font-size:16px;line-height:1;padding:0;opacity:0;transition:opacity .15s;font-family:Inter,sans-serif"
+            onmouseover="this.style.opacity=1;this.style.color='#ff6b6b'" onmouseout="this.style.opacity=0;this.style.color='#374151'">×</button>
+        </div>`).join('')}
   </div>`;
 }
 
@@ -342,68 +414,72 @@ function setTagFilter(tagId) {
 
 async function deleteTag(id) {
   const r = await tagsAPI.delete(id);
-  if (r?.ok !== false) {
+  if (r?.ok === true) {
     if (dashTagFilter === id) { dashTagFilter = null; loadProjects(); }
     await loadTags();
-    showToast('Tag deleted', 'success');
+    showToast('Tag deleted','success');
   } else {
-    showToast('Failed to delete tag', 'error');
+    showToast('Failed to delete tag','error');
   }
 }
 
 function openNewTagModal() {
-  const COLORS = ['#4F7CFF','#22C55E','#F59E0B','#EF4444','#8B5CF6','#EC4899','#06B6D4'];
+  document.getElementById('new-tag-modal')?.remove();
+  const COLORS = ['#00E5FF','#4F7CFF','#22C55E','#F59E0B','#EF4444','#8B5CF6','#EC4899'];
   window._tagPickedColor = COLORS[0];
   const m = document.createElement('div');
   m.id = 'new-tag-modal';
-  m.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center';
+  m.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(3,11,20,.85);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:16px';
+  m.onclick = e => { if (e.target === m) m.remove(); };
   m.innerHTML = `
-    <div style="background:#111A2E;border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:28px;width:380px;box-shadow:0 32px 80px rgba(0,0,0,.6)">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-        <h2 style="color:#E5E7EB;font-size:17px;font-weight:600;font-family:Inter;margin:0">New Tag</h2>
-        <button onclick="document.getElementById('new-tag-modal').remove()" style="background:none;border:none;color:#94A3B8;cursor:pointer;font-size:20px">&times;</button>
+    <div style="background:#071220;border:1px solid rgba(0,229,255,.12);border-radius:18px;padding:32px;width:100%;max-width:380px;box-shadow:0 40px 100px rgba(0,0,0,.7);position:relative;overflow:hidden" onclick="event.stopPropagation()">
+      <div style="position:absolute;top:0;left:25%;right:25%;height:1px;background:linear-gradient(90deg,transparent,rgba(0,229,255,.4),transparent)"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:22px">
+        <h2 style="color:#E8F4FD;font-size:18px;font-weight:800;letter-spacing:-.03em;margin:0">New Tag</h2>
+        <button onclick="document.getElementById('new-tag-modal').remove()" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:#94A3B8;cursor:pointer;font-size:18px;line-height:1;width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-family:Inter,sans-serif">&times;</button>
       </div>
-      <label style="display:block;color:#94A3B8;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;font-family:Inter">Tag Name</label>
-      <input id="new-tag-name" type="text" placeholder="e.g. Client Work" autofocus
-        style="width:100%;background:#0F1729;border:1px solid #1F2A44;border-radius:8px;padding:9px 12px;color:#E5E7EB;font-size:14px;font-family:Inter;outline:none;box-sizing:border-box;margin-bottom:16px"
-        onfocus="this.style.borderColor='#4F7CFF'" onblur="this.style.borderColor='#1F2A44'"/>
-      <label style="display:block;color:#94A3B8;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;font-family:Inter">Color</label>
-      <div id="tag-color-swatches" style="display:flex;gap:8px;margin-bottom:20px">
-        ${COLORS.map(c=>`<div onclick="window._pickTagColor('${c}')" id="swatch-${c.slice(1)}"
-          style="width:24px;height:24px;border-radius:50%;background:${c};cursor:pointer;border:2px solid ${c===COLORS[0]?'#fff':'transparent'};transition:border .15s"></div>`).join('')}
+      <label style="display:block;color:#374151;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;margin-bottom:7px;font-family:Inter,sans-serif">Tag Name</label>
+      <input id="new-tag-name" type="text" placeholder="e.g. Client Work" autofocus class="input-cyber" style="font-size:14px;margin-bottom:18px"/>
+      <label style="display:block;color:#374151;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;margin-bottom:10px;font-family:Inter,sans-serif">Color</label>
+      <div id="tag-color-swatches" style="display:flex;gap:8px;margin-bottom:22px">
+        ${COLORS.map((c,i)=>`<div onclick="window._pickTagColor('${c}')" id="swatch-${c.slice(1)}"
+          style="width:26px;height:26px;border-radius:50%;background:${c};cursor:pointer;border:2px solid ${i===0?'white':'transparent'};transition:all .15s;box-shadow:${i===0?`0 0 10px ${c}60`:'none'}"></div>`).join('')}
       </div>
-      <div id="new-tag-error" style="display:none;color:#EF4444;font-size:12px;margin-bottom:12px;font-family:Inter"></div>
+      <div id="new-tag-error" style="display:none;background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.25);border-radius:8px;padding:9px 12px;color:#ff6b6b;font-size:12px;margin-bottom:14px;font-family:Inter,sans-serif"></div>
       <div style="display:flex;gap:10px;justify-content:flex-end">
         <button onclick="document.getElementById('new-tag-modal').remove()"
-          style="padding:9px 18px;border:1px solid #1F2A44;background:transparent;color:#E5E7EB;border-radius:8px;cursor:pointer;font-family:Inter;font-size:13px">Cancel</button>
-        <button id="create-tag-btn" onclick="submitNewTag()"
-          style="padding:9px 20px;background:#4F7CFF;color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:Inter;font-size:13px;font-weight:600">Create Tag</button>
+          style="padding:10px 20px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);color:#94A3B8;border-radius:9px;cursor:pointer;font-family:Inter,sans-serif;font-size:13px;font-weight:500"
+          onmouseover="this.style.color='#E8F4FD'" onmouseout="this.style.color='#94A3B8'">Cancel</button>
+        <button id="create-tag-btn" onclick="submitNewTag()" class="btn-neon"
+          style="padding:10px 22px;border:none;color:white;border-radius:9px;cursor:pointer;font-family:Inter,sans-serif;font-size:13px;font-weight:700">Create Tag</button>
       </div>
     </div>`;
   document.body.appendChild(m);
   window._pickTagColor = (c) => {
     window._tagPickedColor = c;
     document.querySelectorAll('[id^="swatch-"]').forEach(el => {
-      el.style.borderColor = el.id === 'swatch-' + c.slice(1) ? '#fff' : 'transparent';
+      const isSelected = el.id === 'swatch-' + c.slice(1);
+      el.style.borderColor = isSelected ? 'white' : 'transparent';
+      el.style.boxShadow   = isSelected ? `0 0 10px ${c}60` : 'none';
     });
   };
-  document.getElementById('new-tag-name').addEventListener('keydown', e => { if (e.key === 'Enter') submitNewTag(); });
+  document.getElementById('new-tag-name').addEventListener('keydown', e=>{ if(e.key==='Enter') submitNewTag(); });
 }
 
 async function submitNewTag() {
-  const name = document.getElementById('new-tag-name')?.value?.trim();
+  const name  = document.getElementById('new-tag-name')?.value?.trim();
   const errEl = document.getElementById('new-tag-error');
-  const btn = document.getElementById('create-tag-btn');
-  if (!name) { errEl.textContent = 'Tag name is required'; errEl.style.display = 'block'; return; }
-  btn.textContent = 'Creating…'; btn.disabled = true;
-  const data = await tagsAPI.create(name, window._tagPickedColor || '#4F7CFF');
+  const btn   = document.getElementById('create-tag-btn');
+  if (!name) { errEl.textContent='Tag name is required'; errEl.style.display='block'; return; }
+  btn.textContent='Creating…'; btn.disabled=true;
+  const data = await tagsAPI.create(name, window._tagPickedColor||'#00E5FF');
   if (data?.id) {
     document.getElementById('new-tag-modal')?.remove();
-    showToast('Tag created!', 'success');
+    showToast('Tag created!','success');
     await loadTags();
   } else {
-    errEl.textContent = parseError(data) || 'Failed to create tag';
-    errEl.style.display = 'block';
-    btn.textContent = 'Create Tag'; btn.disabled = false;
+    errEl.textContent = parseError(data)||'Failed to create tag';
+    errEl.style.display='block';
+    btn.textContent='Create Tag'; btn.disabled=false;
   }
 }

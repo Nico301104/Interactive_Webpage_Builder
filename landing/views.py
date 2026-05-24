@@ -23,7 +23,7 @@ def landing_view(request):
             'editor': '/api/editor/projects/{id}/layout/',
         },
         'export': {
-            'download_zip': '/api/export/{project_id}/?format=zip',
-            'json': '/api/export/{project_id}/?format=json',
+            'download_zip': '/api/export/{project_id}/?type=zip',
+            'json': '/api/export/{project_id}/?type=json',
         },
     })

@@ -86,6 +86,7 @@ const TEMPLATES = [
 
 // ── Render Template Gallery ────────────────────────────────────
 window.renderTemplateGallery = function() {
+  document.getElementById('template-gallery-overlay')?.remove();
   const cats = ['All', ...new Set(TEMPLATES.map(t=>t.cat))];
   let activeCat = 'All';
   let search = '';
@@ -193,9 +194,10 @@ function renderTemplateThumbnailRow(c) {
 }
 
 async function openNewProjectModalWithTemplate(tmpl) {
+  document.getElementById('new-project-from-template')?.remove();
   const m = document.createElement('div');
   m.id = 'new-project-from-template';
-  m.style.cssText = 'position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center';
+  m.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center';
   m.innerHTML = `
     <div style="background:#111A2E;border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:32px;width:460px;box-shadow:0 32px 80px rgba(0,0,0,.6)">
       <h2 style="color:#E5E7EB;font-size:18px;font-weight:600;font-family:Inter;margin:0 0 8px">Create from template</h2>

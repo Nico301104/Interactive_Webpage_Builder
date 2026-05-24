@@ -256,7 +256,7 @@ button { cursor: pointer; border: none; background: none; font: inherit; }
   .pb-navbar-links.open { display: flex; flex-direction: column; position: absolute;
     top: 100%; left: 0; right: 0; padding: 16px 32px; gap: 16px; z-index: 200; }
   .pb-hamburger { display: flex; }
-  .pb-pb-section { padding: 48px 0; }
+  .pb-section { padding: 48px 0; }
   .pb-form-row { grid-template-columns: 1fr; }
   .pb-gallery-3, .pb-gallery-4 { grid-template-columns: repeat(2, 1fr); }
   .pb-gallery-masonry { columns: 2; }
@@ -449,7 +449,8 @@ def _btn_html(c: dict) -> str:
     fw = ' pb-btn-full' if c.get('fullWidth') else ''
     outline = c.get('variant') == 'outline'
     if outline:
-        style = f'border:2px solid {bg};color:{bg};background:transparent;border-radius:{br}'
+        accent = tc if (not bg or bg == 'transparent') else bg
+        style = f'border:2px solid {accent};color:{accent};background:transparent;border-radius:{br}'
     else:
         style = f'background:{bg};color:{tc};border-radius:{br}'
     icon = f'<span>{c["icon"]}</span>' if c.get('icon') else ''
@@ -602,7 +603,7 @@ def _render_features(c: dict) -> str:
                   f'{icon_html}'
                   f'<h3 style="font-size:18px;font-weight:700;margin-bottom:10px;color:{tc}">{_e(item.get("title",""))}</h3>'
                   f'<p style="font-size:15px;line-height:1.7;opacity:.75;color:{tc}">{_e(item.get("description",""))}</p>'
-                  f'{"<a href=" + chr(34) + _e(item["link"]) + chr(34) + " style=color:" + _e(item.get("linkColor","#4F7CFF")) + ";font-weight:600;font-size:14px;margin-top:14px;display:inline-block>" + _e(item.get("linkLabel","Learn more →")) + "</a>" if item.get("link") else ""}'
+                  f'{("<a href=\"" + _e(item["link"]) + "\" style=\"color:" + _e(item.get("linkColor","#4F7CFF")) + ";font-weight:600;font-size:14px;margin-top:14px;display:inline-block\">" + _e(item.get("linkLabel","Learn more →")) + "</a>") if item.get("link") else ""}'
                   f'</div>')
     pad = c.get('padding', '80px 0')
     grid_cls = f'pb-grid-{min(max(cols,1),4)}'
@@ -625,7 +626,7 @@ def _render_pricing(c: dict) -> str:
         badge = (f'<div class="pb-pricing-popular-badge" style="background:{plan.get("accentColor","#4F7CFF")};color:#fff">'
                  f'{_e(plan.get("popularLabel","Most popular"))}</div>') if popular else ''
         features = ''.join(
-            f'<li style="color:{card_tc}" {"" if feat.get("included",True) else "style=opacity:.4"}>'
+            f'<li style="color:{card_tc}{"" if feat.get("included",True) else ";opacity:.4"}">'
             f'<span style="color:{"#22C55E" if feat.get("included",True) else "#94A3B8"}">'
             f'{"✓" if feat.get("included",True) else "✕"}</span>{_e(feat.get("text",""))}</li>'
             for feat in plan.get('features', [])
@@ -639,7 +640,7 @@ def _render_pricing(c: dict) -> str:
                   f'<div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;opacity:.5;color:{card_tc}">{_e(plan.get("name","Plan"))}</div>'
                   f'<div class="pb-pricing-price" style="color:{card_tc}">{currency}{price}</div>'
                   f'<div class="pb-pricing-period" style="color:{card_tc}">{period}</div>'
-                  f'{"<p style=font-size:14px;opacity:.7;margin-bottom:20px;color:" + card_tc + ">" + _e(plan.get("description","")) + "</p>" if plan.get("description") else ""}'
+                  f'{("<p style=\"font-size:14px;opacity:.7;margin-bottom:20px;color:" + card_tc + "\">" + _e(plan.get("description","")) + "</p>") if plan.get("description") else ""}'
                   f'<ul class="pb-pricing-features" style="color:{card_tc}">{features}</ul>'
                   f'{btn}</div>')
     cols = min(len(plans), 3) if plans else 3
@@ -706,9 +707,9 @@ def _render_cta(c: dict) -> str:
             f'<div class="pb-container"><div style="max-width:{c.get("maxWidth","700px")};{"margin-inline:auto;" if align=="center" else ""}">'
             f'{eyebrow_html}'
             f'<h2 class="pb-section-title" style="color:{tc}">{_e(c.get("title",""))}</h2>'
-            f'{"<p style=font-size:1.1rem;opacity:.8;margin-bottom:32px;color:" + tc + ">" + _e(c.get("subtitle","")) + "</p>" if c.get("subtitle") else ""}'
+            f'{("<p style=\"font-size:1.1rem;opacity:.8;margin-bottom:32px;color:" + tc + "\">" + _e(c.get("subtitle","")) + "</p>") if c.get("subtitle") else ""}'
             f'{btns_html}'
-            f'{"<p style=font-size:13px;margin-top:14px;opacity:.5;color:" + tc + ">" + _e(c.get("note","")) + "</p>" if c.get("note") else ""}'
+            f'{("<p style=\"font-size:13px;margin-top:14px;opacity:.5;color:" + tc + "\">" + _e(c.get("note","")) + "</p>") if c.get("note") else ""}'
             f'</div></div></section>')
 
 
@@ -749,8 +750,8 @@ def _render_team(c: dict) -> str:
                        f'{photo}'
                        f'<div class="pb-team-name">{_e(m.get("name",""))}</div>'
                        f'<div class="pb-team-role">{_e(m.get("role",""))}</div>'
-                       f'{"<p class=pb-team-bio>" + _e(m.get("bio","")) + "</p>" if m.get("bio") else ""}'
-                       f'{"<div style=display:flex;gap:12px;justify-content:center;margin-top:12px>" + social + "</div>" if social else ""}'
+                       f'{("<p class=\"pb-team-bio\">" + _e(m.get("bio","")) + "</p>") if m.get("bio") else ""}'
+                       f'{("<div style=\"display:flex;gap:12px;justify-content:center;margin-top:12px\">" + social + "</div>") if social else ""}'
                        f'</div>')
     return (f'<section class="pb-section" style="background:{bg};padding:{c.get("padding","80px 0")}">'
             f'<div class="pb-container">{header}'
@@ -887,7 +888,7 @@ def _render_footer(c: dict) -> str:
             f'<div class="pb-footer-grid" style="grid-template-columns:{grid_cols}">'
             f'<div class="pb-footer-brand">'
             f'<div class="pb-footer-logo" style="color:{logo_color}">{_e(logo)}</div>'
-            f'{"<p class=pb-footer-desc>" + _e(desc) + "</p>" if desc else ""}'
+            f'{("<p class=\"pb-footer-desc\">" + _e(desc) + "</p>") if desc else ""}'
             f'{social_div}</div>{col_html}</div>'
             f'<div class="pb-footer-bottom" style="border-top-color:{border_color}">'
             f'<span style="color:{tc}">{_e(copyright)}</span>'

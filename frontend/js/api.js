@@ -142,9 +142,11 @@ const exportAPI = {
 };
 
 const paymentsAPI = {
-  checkout: (data)=> apiJSON('/api/payments/checkout/', {method:'POST', body:JSON.stringify(data)}),
-  status: ()=> apiJSON('/api/payments/status/'),
-  history: ()=> apiJSON('/api/payments/history/'),
+  config:        ()=>     apiJSON('/api/payments/config/'),
+  createIntent:  (data)=> apiJSON('/api/payments/create-intent/', {method:'POST', body:JSON.stringify(data)}),
+  confirm:       (data)=> apiJSON('/api/payments/confirm/',        {method:'POST', body:JSON.stringify(data)}),
+  status:        ()=>     apiJSON('/api/payments/status/'),
+  history:       ()=>     apiJSON('/api/payments/history/'),
 };
 
 const tagsAPI = {

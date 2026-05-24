@@ -35,10 +35,7 @@ class ProjectLayoutView(APIView):
     permission_classes = [IsAuthenticated]
 
     def _get_project(self, request, pk):
-        project = get_object_or_404(Project, pk=pk)
-        if project.owner != request.user:
-            self.permission_denied(request)
-        return project
+        return get_object_or_404(Project, pk=pk, owner=request.user)
 
     def get(self, request, pk):
         project = self._get_project(request, pk)

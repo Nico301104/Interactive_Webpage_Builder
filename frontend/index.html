@@ -3,11 +3,12 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>IWB</title>
+  <title>IWB — Build at the speed of thought</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <script src="https://js.stripe.com/v3/"></script>
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
   <script id="tailwind-config">
     tailwind.config = {
@@ -27,16 +28,16 @@
             "tertiary-container":"#df7313","on-tertiary-container":"#461f00",
             "tertiary-fixed":"#ffdcc6","tertiary-fixed-dim":"#ffb786",
             "on-tertiary-fixed":"#311300","on-tertiary-fixed-variant":"#723600",
-            "error":"#ffb4ab","on-error":"#690005",
+            "error":"#ff6b6b","on-error":"#690005",
             "error-container":"#93000a","on-error-container":"#ffdad6",
-            "surface":"#051424","surface-dim":"#051424","surface-bright":"#2c3a4c",
-            "surface-container-lowest":"#010f1f","surface-container-low":"#0d1c2d",
-            "surface-container":"#122131","surface-container-high":"#1c2b3c",
-            "surface-container-highest":"#273647","surface-variant":"#273647",
-            "surface-tint":"#b5c4ff","on-surface":"#d4e4fa","on-surface-variant":"#c3c5d7",
-            "outline":"#8d90a0","outline-variant":"#434654",
-            "inverse-surface":"#d4e4fa","inverse-on-surface":"#233143",
-            "inverse-primary":"#1a53d6","background":"#051424","on-background":"#d4e4fa"
+            "surface":"#030B14","surface-dim":"#030B14","surface-bright":"#1E2D40",
+            "surface-container-lowest":"#010810","surface-container-low":"#071220",
+            "surface-container":"#0A1628","surface-container-high":"#122033",
+            "surface-container-highest":"#1A2D42","surface-variant":"#1A2D42",
+            "surface-tint":"#00E5FF","on-surface":"#E8F4FD","on-surface-variant":"#94A3B8",
+            "outline":"#374151","outline-variant":"#1F2D3D",
+            "inverse-surface":"#E8F4FD","inverse-on-surface":"#0A1628",
+            "inverse-primary":"#1a53d6","background":"#030B14","on-background":"#E8F4FD"
           },
           borderRadius:{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},
           spacing:{"unit":"4px","xs":"4px","sm":"8px","md":"16px","lg":"24px","xl":"48px","sidebar-width":"280px","toolbar-height":"56px","canvas-margin":"32px"},
@@ -57,14 +58,112 @@
     }
   </script>
   <style>
-    .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
-    ::-webkit-scrollbar{width:6px;height:6px;}
+    /* ── Keyframes ─────────────────────────── */
+    @keyframes float       { 0%,100%{transform:perspective(1600px) rotateX(6deg) rotateY(-1deg) translateY(0)} 50%{transform:perspective(1600px) rotateX(6deg) rotateY(-1deg) translateY(-16px)} }
+    @keyframes float-orb   { 0%,100%{transform:translateY(0) scale(1)} 50%{transform:translateY(-12px) scale(1.05)} }
+    @keyframes neon-pulse  { 0%,100%{opacity:.35;filter:blur(35px)} 50%{opacity:.7;filter:blur(20px)} }
+    @keyframes shimmer     { 0%{background-position:-300% center} 100%{background-position:300% center} }
+    @keyframes badge-glow  { 0%,100%{box-shadow:0 0 8px rgba(0,229,255,.25)} 50%{box-shadow:0 0 20px rgba(0,229,255,.55)} }
+    @keyframes dot-pulse   { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.6);opacity:1} }
+    @keyframes spin        { to{transform:rotate(360deg)} }
+    @keyframes slide-up    { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes border-run  { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+
+    /* ── Scrollbar ──────────────────────────── */
+    ::-webkit-scrollbar{width:5px;height:5px;}
     ::-webkit-scrollbar-track{background:transparent;}
-    ::-webkit-scrollbar-thumb{background:#273647;border-radius:4px;}
-    ::-webkit-scrollbar-thumb:hover{background:#434654;}
+    ::-webkit-scrollbar-thumb{background:rgba(0,229,255,.2);border-radius:3px;}
+    ::-webkit-scrollbar-thumb:hover{background:rgba(0,229,255,.4);}
+
+    /* ── Base ───────────────────────────────── */
     *{box-sizing:border-box;}
     body{margin:0;}
     [id=app]{min-height:100vh;}
+    .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
+
+    /* ── Backgrounds ────────────────────────── */
+    .cyber-grid {
+      background-image:
+        linear-gradient(rgba(0,229,255,.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,229,255,.025) 1px, transparent 1px);
+      background-size:48px 48px;
+    }
+    .dot-grid {
+      background-image:radial-gradient(circle, rgba(0,229,255,.06) 1px, transparent 1px);
+      background-size:28px 28px;
+    }
+
+    /* ── Holographic text ───────────────────── */
+    .holo-text {
+      background:linear-gradient(135deg, #00E5FF 0%, #4F7CFF 30%, #8B5CF6 60%, #FF2EFF 100%);
+      background-size:300% auto;
+      -webkit-background-clip:text;
+      background-clip:text;
+      -webkit-text-fill-color:transparent;
+      animation:shimmer 5s linear infinite;
+    }
+
+    /* ── Buttons ────────────────────────────── */
+    .btn-neon {
+      background:linear-gradient(135deg,#00C4DD,#006FE8);
+      box-shadow:0 0 22px rgba(0,229,255,.3), 0 4px 20px rgba(0,100,220,.3);
+      transition:all .2s ease;
+      cursor:pointer;
+    }
+    .btn-neon:hover  { filter:brightness(1.12); box-shadow:0 0 35px rgba(0,229,255,.5),0 8px 30px rgba(0,100,220,.4); transform:translateY(-1px); }
+    .btn-neon:active { transform:translateY(1px) scale(.98); }
+
+    .btn-ghost {
+      background:transparent;
+      border:1px solid rgba(255,255,255,.1);
+      color:#94A3B8;
+      transition:all .2s ease;
+      cursor:pointer;
+    }
+    .btn-ghost:hover { border-color:rgba(0,229,255,.35); background:rgba(0,229,255,.05); color:#E8F4FD; }
+
+    /* ── Glass ──────────────────────────────── */
+    .glass {
+      background:rgba(255,255,255,.03);
+      backdrop-filter:blur(24px);
+      -webkit-backdrop-filter:blur(24px);
+    }
+
+    /* ── Inputs ─────────────────────────────── */
+    .input-cyber {
+      background:#060F1A;
+      border:1px solid rgba(255,255,255,.07);
+      color:#E8F4FD;
+      border-radius:10px;
+      padding:11px 14px;
+      font-size:15px;
+      font-family:Inter,sans-serif;
+      width:100%;
+      outline:none;
+      transition:border-color .2s, box-shadow .2s;
+    }
+    .input-cyber:focus { border-color:#00E5FF; box-shadow:0 0 0 3px rgba(0,229,255,.08),0 0 16px rgba(0,229,255,.04); }
+    .input-cyber::placeholder { color:#2D3F52; }
+
+    /* ── Card 3D tilt ───────────────────────── */
+    .card-3d { will-change:transform; }
+
+    /* ── Separators ─────────────────────────── */
+    .sep-neon { height:1px; background:linear-gradient(90deg, transparent, rgba(0,229,255,.35), transparent); }
+
+    /* ── Sidebar items ──────────────────────── */
+    .sidebar-item { transition:all .15s ease; border-radius:8px; }
+    .sidebar-item:hover { background:rgba(255,255,255,.04); }
+    .sidebar-active { background:linear-gradient(90deg,rgba(0,229,255,.1),rgba(0,229,255,.04)); border-left:2px solid #00E5FF !important; color:#00E5FF !important; }
+
+    /* ── Float animation for mockup ─────────── */
+    .float-anim { animation:float 7s ease-in-out infinite; }
+
+    /* ── Spinner ────────────────────────────── */
+    .iwb-spinner { width:22px;height:22px;border:2px solid rgba(0,229,255,.2);border-top-color:#00E5FF;border-radius:50%;animation:spin .7s linear infinite; }
+
+    /* ── Badge live dot ─────────────────────── */
+    .dot-live { animation:dot-pulse 2s ease-in-out infinite; }
   </style>
 </head>
 <body class="bg-background text-on-background">
@@ -85,6 +184,19 @@
   <script src="js/pages/pricing.js"></script>
 
   <script>
+    // ── 3D Tilt helpers (called via inline onmousemove/onmouseleave) ──
+    function tilt(el, e) {
+      const r = el.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width  - 0.5;
+      const y = (e.clientY - r.top)  / r.height - 0.5;
+      el.style.transform = `perspective(900px) rotateY(${x*14}deg) rotateX(${-y*14}deg) scale(1.025)`;
+      el.style.transition = 'transform 0.07s ease';
+    }
+    function untilt(el) {
+      el.style.transform = '';
+      el.style.transition = 'transform 0.5s cubic-bezier(0.23,1,0.32,1)';
+    }
+
     router
       .register('/', renderLanding)
       .register('/auth', renderAuth)
@@ -94,14 +206,14 @@
       .register('/pricing', renderPricing)
       .register('/404', ()=>{
         document.getElementById('app').innerHTML=`
-        <div class="min-h-screen flex flex-col items-center justify-center bg-background relative overflow-hidden">
-          <div class="absolute inset-0" style="background:radial-gradient(circle at 50% -20%,rgba(100,138,255,.15) 0%,transparent 50%)"></div>
-          <div class="absolute inset-0" style="background-image:radial-gradient(circle,rgba(255,255,255,0.025) 1px,transparent 1px);background-size:24px 24px"></div>
-          <h1 class="text-[120px] font-black leading-none tracking-tighter text-transparent bg-clip-text bg-gradient-to-br from-blue-400 via-primary to-teal-400 z-10">404</h1>
-          <h2 class="font-h2 text-h2 text-on-surface mb-4 z-10">Page not found</h2>
-          <p class="text-on-surface-variant mb-8 z-10 max-w-md text-center">The link might be broken or the page has been moved.</p>
-          <button onclick="router.go('/')" class="px-8 py-3 bg-primary-container text-on-primary-container rounded-DEFAULT font-semibold hover:brightness-110 transition-all z-10 flex items-center gap-2">
-            <span class="material-symbols-outlined text-[18px]">home</span> Go Home
+        <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#030B14;position:relative;overflow:hidden">
+          <div class="dot-grid" style="position:absolute;inset:0"></div>
+          <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,rgba(0,229,255,.06),transparent 60%)"></div>
+          <div class="holo-text" style="font-size:140px;font-weight:900;line-height:1;letter-spacing:-.04em;position:relative;z-index:10">404</div>
+          <div style="font-size:26px;font-weight:700;color:#E8F4FD;margin:0 0 12px;position:relative;z-index:10">Page not found</div>
+          <p style="color:#64748B;margin:0 0 36px;text-align:center;max-width:380px;line-height:1.6;position:relative;z-index:10">The link might be broken or the page has been moved.</p>
+          <button onclick="router.go('/')" class="btn-neon" style="border:none;color:white;font-size:15px;font-weight:600;padding:13px 30px;border-radius:10px;display:flex;align-items:center;gap:8px;position:relative;z-index:10">
+            <span class="material-symbols-outlined" style="font-size:18px">home</span> Go Home
           </button>
         </div>`;
       })

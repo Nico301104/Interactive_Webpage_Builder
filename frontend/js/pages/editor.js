@@ -4,6 +4,7 @@ let editorLayout = { components: [] };
 let selectedId = null;
 let isDirty = false;
 let undoStack = [];
+let redoStack = [];
 let autoSaveTimer = null;
 
 const COMPONENT_TYPES = [
@@ -70,98 +71,125 @@ async function renderEditor(params) {
   selectedId = null;
   isDirty = false;
   undoStack = [];
+  redoStack = [];
 
   document.getElementById('app').innerHTML = `
-  <div class="bg-background text-on-background font-body-md h-screen w-screen overflow-hidden flex flex-col selection:bg-primary-container selection:text-on-primary-container">
-    <!-- Top Nav -->
-    <nav class="bg-[#111A2E]/80 backdrop-blur-xl fixed top-0 w-full z-50 border-b border-slate-800 shadow-[0px_10px_20px_rgba(0,0,0,0.5)] flex justify-between items-center h-16 px-6">
-      <div class="flex items-center gap-6">
-        <button onclick="backToDashboard()" class="flex items-center gap-1 text-slate-400 hover:text-white transition-colors text-sm">
-          <span class="material-symbols-outlined text-[18px]">arrow_back</span> Dashboard
+  <div style="background:#030B14;color:#E8F4FD;font-family:Inter,system-ui,sans-serif;height:100vh;width:100vw;overflow:hidden;display:flex;flex-direction:column">
+
+    <!-- ── TOP NAVBAR ─────────────────────────────────────────── -->
+    <nav style="background:rgba(5,11,22,0.97);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-bottom:1px solid rgba(0,229,255,.08);position:fixed;top:0;width:100%;z-index:50;display:flex;justify-content:space-between;align-items:center;height:56px;padding:0 20px;box-shadow:0 4px 24px rgba(0,0,0,.5)">
+      <!-- Left: back + title -->
+      <div style="display:flex;align-items:center;gap:16px">
+        <button onclick="backToDashboard()" style="display:flex;align-items:center;gap:6px;background:none;border:none;color:#64748B;cursor:pointer;font-size:13px;font-family:Inter;padding:6px 10px;border-radius:8px;transition:all .15s" onmouseover="this.style.background='rgba(0,229,255,.06)';this.style.color='#00E5FF'" onmouseout="this.style.background='none';this.style.color='#64748B'">
+          <span class="material-symbols-outlined" style="font-size:16px">arrow_back</span> Dashboard
         </button>
-        <span class="w-px h-5 bg-slate-700"></span>
-        <div id="project-title-display" class="flex items-center gap-2 cursor-pointer group" onclick="editTitle()">
-          <span id="project-title-text" class="text-white font-semibold text-sm">Loading…</span>
-          <span class="material-symbols-outlined text-[14px] text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity">edit</span>
+        <div style="width:1px;height:20px;background:rgba(255,255,255,.07)"></div>
+        <!-- Logo chip -->
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#00C4DD,#006FE8);display:flex;align-items:center;justify-content:center;box-shadow:0 0 12px rgba(0,229,255,.3)">
+            <span class="material-symbols-outlined" style="color:white;font-size:14px;font-variation-settings:'FILL' 1">architecture</span>
+          </div>
+          <div id="project-title-display" style="display:flex;align-items:center;gap:6px;cursor:pointer" onclick="editTitle()" onmouseover="this.querySelector('.edit-icon').style.opacity='1'" onmouseout="this.querySelector('.edit-icon').style.opacity='0'">
+            <span id="project-title-text" style="color:#E8F4FD;font-weight:700;font-size:14px">Loading…</span>
+            <span class="material-symbols-outlined edit-icon" style="font-size:13px;color:#4B5563;opacity:0;transition:opacity .15s">edit</span>
+          </div>
         </div>
       </div>
-      <div class="hidden lg:flex items-center bg-surface-container-high rounded-DEFAULT p-1 border border-outline-variant/30">
-        <button onclick="setDevice('desktop')" id="dev-desktop" class="w-8 h-8 flex items-center justify-center rounded-DEFAULT bg-surface-variant text-primary shadow-sm">
-          <span class="material-symbols-outlined text-[18px]">desktop_windows</span>
+
+      <!-- Center: device toggle + zoom -->
+      <div style="display:flex;align-items:center;background:rgba(6,15,26,.8);border:1px solid rgba(0,229,255,.1);border-radius:10px;padding:3px 6px;gap:2px">
+        <button id="dev-desktop" onclick="setDevice('desktop')" title="Desktop (1200px)" style="display:flex;align-items:center;gap:4px;padding:4px 8px;border:none;border-radius:7px;cursor:pointer;background:rgba(0,229,255,.12);color:#00E5FF;transition:all .15s;font-family:Inter">
+          <span class="material-symbols-outlined" style="font-size:16px">desktop_windows</span>
         </button>
-        <button onclick="setDevice('tablet')" id="dev-tablet" class="w-8 h-8 flex items-center justify-center rounded-DEFAULT text-on-surface-variant hover:text-on-surface transition-colors">
-          <span class="material-symbols-outlined text-[18px]">tablet_mac</span>
+        <button id="dev-tablet" onclick="setDevice('tablet')" title="Tablet (768px)" style="display:flex;align-items:center;gap:4px;padding:4px 8px;border:none;border-radius:7px;cursor:pointer;background:transparent;color:#4B5563;transition:all .15s;font-family:Inter">
+          <span class="material-symbols-outlined" style="font-size:16px">tablet_mac</span>
         </button>
-        <button onclick="setDevice('mobile')" id="dev-mobile" class="w-8 h-8 flex items-center justify-center rounded-DEFAULT text-on-surface-variant hover:text-on-surface transition-colors">
-          <span class="material-symbols-outlined text-[18px]">smartphone</span>
+        <button id="dev-mobile" onclick="setDevice('mobile')" title="Mobile (375px)" style="display:flex;align-items:center;gap:4px;padding:4px 8px;border:none;border-radius:7px;cursor:pointer;background:transparent;color:#4B5563;transition:all .15s;font-family:Inter">
+          <span class="material-symbols-outlined" style="font-size:16px">smartphone</span>
         </button>
-        <div class="w-px h-4 bg-outline-variant/50 mx-1"></div>
-        <span id="zoom-label" class="font-code-sm text-code-sm text-on-surface-variant px-2">100%</span>
+        <div style="width:1px;height:14px;background:rgba(0,229,255,.1);margin:0 4px"></div>
+        <span id="device-width-label" style="font-size:11px;color:#4B5563;font-family:JetBrains Mono,monospace">1200px</span>
+        <div style="width:1px;height:14px;background:rgba(0,229,255,.1);margin:0 4px"></div>
+        <span id="zoom-label" style="font-size:11px;color:#4B5563;font-family:JetBrains Mono,monospace">100%</span>
       </div>
-      <div class="flex items-center gap-2">
-        <button onclick="editorUndo()" title="Undo" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/5 rounded-DEFAULT transition-all">
-          <span class="material-symbols-outlined text-[18px]">undo</span>
+
+      <!-- Right: actions -->
+      <div style="display:flex;align-items:center;gap:6px">
+        <button id="undo-btn" onclick="editorUndo()" title="Undo (Ctrl+Z)" disabled style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:none;border:none;color:#2D3F52;cursor:not-allowed;border-radius:8px;transition:all .15s">
+          <span class="material-symbols-outlined" style="font-size:18px">undo</span>
         </button>
-        <div class="w-px h-5 bg-slate-700 mx-1"></div>
-        <button onclick="openExportModal()" class="px-3 py-1.5 rounded-DEFAULT border border-[#1F2937] text-slate-300 text-sm font-medium hover:bg-white/5 transition-all flex items-center gap-1">
-          <span class="material-symbols-outlined text-[16px]">download</span> Export
+        <button id="redo-btn" onclick="editorRedo()" title="Redo (Ctrl+Y)" disabled style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:none;border:none;color:#2D3F52;cursor:not-allowed;border-radius:8px;transition:all .15s">
+          <span class="material-symbols-outlined" style="font-size:18px">redo</span>
         </button>
-        <button onclick="openSettingsModal()" class="px-3 py-1.5 rounded-DEFAULT border border-[#1F2937] text-slate-300 text-sm font-medium hover:bg-white/5 transition-all flex items-center gap-1">
-          <span class="material-symbols-outlined text-[16px]">settings</span>
+        <div style="width:1px;height:20px;background:rgba(255,255,255,.06)"></div>
+        <button onclick="openExportModal()" style="display:flex;align-items:center;gap:5px;padding:6px 12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;color:#94A3B8;font-size:13px;font-family:Inter;cursor:pointer;transition:all .15s" onmouseover="this.style.background='rgba(255,255,255,.08)';this.style.color='#E8F4FD'" onmouseout="this.style.background='rgba(255,255,255,.04)';this.style.color='#94A3B8'">
+          <span class="material-symbols-outlined" style="font-size:15px">download</span> Export
         </button>
-        <button id="save-btn" onclick="saveLayout()" class="px-4 py-1.5 rounded-DEFAULT bg-[#4F7CFF] text-white text-sm font-medium hover:brightness-110 shadow-[0_0_12px_rgba(79,124,255,0.3)] transition-all active:scale-95 flex items-center gap-1">
-          <span class="material-symbols-outlined text-[16px]">save</span> Save
+        <button onclick="openSettingsModal()" style="display:flex;align-items:center;gap:5px;padding:6px 12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;color:#94A3B8;font-size:13px;font-family:Inter;cursor:pointer;transition:all .15s" onmouseover="this.style.background='rgba(255,255,255,.08)';this.style.color='#E8F4FD'" onmouseout="this.style.background='rgba(255,255,255,.04)';this.style.color='#94A3B8'">
+          <span class="material-symbols-outlined" style="font-size:15px">settings</span>
         </button>
-        <div id="save-status" class="flex items-center gap-1 ml-1">
-          <span class="w-2 h-2 rounded-full bg-slate-500" id="save-dot"></span>
-          <span class="text-xs text-slate-500" id="save-text">Saved</span>
+        <button id="save-btn" onclick="saveLayout()" class="btn-neon" style="display:flex;align-items:center;gap:6px;padding:7px 16px;border:none;color:white;font-size:13px;font-weight:700;font-family:Inter;border-radius:8px;cursor:pointer">
+          <span class="material-symbols-outlined" style="font-size:15px">save</span> Save
+        </button>
+        <div id="save-status" style="display:flex;align-items:center;gap:5px;margin-left:4px">
+          <span style="width:7px;height:7px;border-radius:50%;background:#374151" id="save-dot"></span>
+          <span style="font-size:11px;color:#374151;font-family:JetBrains Mono" id="save-text">Saved</span>
         </div>
       </div>
     </nav>
-    <!-- Workspace -->
-    <div class="flex flex-1 pt-16 h-full">
-      <!-- Left Panel -->
-      <aside class="bg-[#111A2E] font-['JetBrains_Mono'] text-xs uppercase tracking-widest h-[calc(100vh-4rem)] w-64 border-r fixed left-0 border-slate-800 flex flex-col py-4 z-40">
-        <div class="px-4 mb-4 flex items-center gap-3">
-          <div class="w-8 h-8 rounded-DEFAULT bg-primary/20 flex items-center justify-center border border-primary/30">
-            <span class="material-symbols-outlined text-primary text-[18px]">web</span>
+
+    <!-- ── WORKSPACE ───────────────────────────────────────────── -->
+    <div style="display:flex;flex:1;padding-top:56px;height:100%">
+
+      <!-- ── LEFT SIDEBAR ───────────────────────────────────────── -->
+      <aside style="background:#060F1A;border-right:1px solid rgba(0,229,255,.07);position:fixed;left:0;top:56px;bottom:0;width:240px;display:flex;flex-direction:column;z-index:40">
+        <!-- Project info -->
+        <div style="padding:14px 14px 10px;border-bottom:1px solid rgba(0,229,255,.06)">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,rgba(0,196,221,.15),rgba(0,111,232,.15));border:1px solid rgba(0,229,255,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <span class="material-symbols-outlined" style="font-size:16px;color:#00E5FF">web</span>
+            </div>
+            <div style="min-width:0">
+              <div style="color:#E8F4FD;font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="sidebar-project-name">Project</div>
+              <div style="color:#374151;font-size:10px;font-family:JetBrains Mono;letter-spacing:.06em">DRAG TO CANVAS</div>
+            </div>
           </div>
-          <div>
-            <div class="text-slate-200 font-bold tracking-normal capitalize text-sm" id="sidebar-project-name">Project</div>
-            <div class="text-slate-500 text-[10px]">drag to canvas</div>
+          <!-- Tab switcher -->
+          <div style="display:flex;gap:4px;margin-top:10px;background:#030B14;border:1px solid rgba(0,229,255,.07);border-radius:8px;padding:3px">
+            <button id="tab-comp" onclick="switchLibTab('comp')" style="flex:1;padding:6px;font-size:11px;font-weight:600;border-radius:6px;border:1px solid rgba(0,229,255,.2);background:rgba(0,229,255,.1);color:#00E5FF;cursor:pointer;font-family:Inter;transition:all .15s">Components</button>
+            <button id="tab-layers" onclick="switchLibTab('layers')" style="flex:1;padding:6px;font-size:11px;font-weight:600;border-radius:6px;border:none;background:transparent;color:#374151;cursor:pointer;font-family:Inter;transition:all .15s">Layers</button>
           </div>
         </div>
-        <!-- Tabs -->
-        <div class="flex gap-1 px-2 mb-3">
-          <button id="tab-comp" onclick="switchLibTab('comp')" class="flex-1 py-1 text-[10px] rounded bg-primary/10 text-primary border border-primary/20 font-semibold">Components</button>
-          <button id="tab-layers" onclick="switchLibTab('layers')" class="flex-1 py-1 text-[10px] rounded text-slate-500 hover:text-slate-300 border border-transparent hover:border-slate-700 transition-all">Layers</button>
-        </div>
-        <div id="lib-components" class="flex-1 overflow-y-auto px-2 flex flex-col gap-1">
+        <!-- Component library -->
+        <div id="lib-components" style="flex:1;overflow-y:auto;padding:8px">
           ${renderComponentLibrary()}
         </div>
-        <div id="lib-layers" class="hidden flex-1 overflow-y-auto px-2 flex flex-col gap-0.5">
+        <div id="lib-layers" style="display:none;flex:1;overflow-y:auto;padding:8px">
         </div>
       </aside>
-      <!-- Canvas -->
-      <main class="ml-64 mr-[300px] flex-1 flex flex-col relative bg-background overflow-hidden">
-        <div class="h-10 border-b border-surface-variant flex items-center px-4 justify-between bg-surface-container-lowest/50 backdrop-blur-sm absolute top-0 w-full z-10">
-          <div class="flex items-center gap-2 text-on-surface-variant font-code-sm text-code-sm">
-            <span class="material-symbols-outlined text-[16px]">mouse</span>
+
+      <!-- ── CANVAS ─────────────────────────────────────────────── -->
+      <main style="margin-left:240px;margin-right:280px;flex:1;display:flex;flex-direction:column;position:relative;overflow:hidden;background:#030B14">
+        <!-- Canvas toolbar -->
+        <div style="height:38px;border-bottom:1px solid rgba(0,229,255,.06);display:flex;align-items:center;padding:0 16px;justify-content:space-between;background:rgba(6,15,26,.7);backdrop-filter:blur(12px);position:absolute;top:0;width:100%;z-index:10;box-sizing:border-box">
+          <div style="display:flex;align-items:center;gap:6px;color:#374151;font-size:11px;font-family:JetBrains Mono">
+            <span class="material-symbols-outlined" style="font-size:14px">mouse</span>
             <span id="canvas-hint">Select or drag a component</span>
           </div>
-          <div class="flex items-center gap-4 text-on-surface-variant font-code-sm text-code-sm">
-            <span id="grid-toggle-btn" onclick="toggleCanvasGrid()" class="flex items-center gap-1 cursor-pointer hover:text-on-surface select-none">
-              <span class="material-symbols-outlined text-[16px]">grid_on</span> Grid
-            </span>
-          </div>
+          <span id="grid-toggle-btn" onclick="toggleCanvasGrid()" style="display:flex;align-items:center;gap:4px;cursor:pointer;color:#374151;font-size:11px;font-family:JetBrains Mono;transition:color .15s;user-select:none" onmouseover="this.style.color='#00E5FF'" onmouseout="this.style.color='#374151'">
+            <span class="material-symbols-outlined" style="font-size:14px">grid_on</span> GRID
+          </span>
         </div>
-        <div class="flex-1 mt-10 overflow-auto flex justify-center items-start" id="canvas-scroll" style="background:#070E1C;background-image:radial-gradient(circle,rgba(255,255,255,0.025) 1px,transparent 1px);background-size:24px 24px">
-          <div id="canvas-wrapper" style="padding:32px;min-height:100%">
-            <div id="canvas-frame" class="bg-white rounded-DEFAULT shadow-[0_20px_40px_rgba(0,0,0,0.5),0_2px_4px_rgba(0,0,0,0.3)] relative origin-top transition-all duration-300" style="width:1200px;min-height:800px">
-              <div id="canvas-empty" class="absolute inset-0 flex flex-col items-center justify-center" style="display:none">
-                <div style="border:2px dashed rgba(79,124,255,0.3);border-radius:12px;padding:40px;text-align:center">
-                  <span class="material-symbols-outlined" style="font-size:48px;color:rgba(79,124,255,0.4)">add_box</span>
-                  <p style="color:#4B5563;font-size:14px;margin-top:12px;font-family:Inter">Drag a component here to start</p>
+        <!-- Scrollable canvas area -->
+        <div style="flex:1;margin-top:38px;overflow:auto;display:flex;justify-content:center;align-items:flex-start;background:#030B14;background-image:linear-gradient(rgba(0,229,255,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,.018) 1px,transparent 1px);background-size:32px 32px" id="canvas-scroll">
+          <div id="canvas-wrapper" style="padding:40px;min-height:100%">
+            <div id="canvas-frame" style="background:white;border-radius:4px;box-shadow:0 0 0 1px rgba(0,229,255,.15),0 24px 80px rgba(0,0,0,.7),0 4px 16px rgba(0,0,0,.4);position:relative;transition:width .3s ease;width:1200px;min-height:800px;transform-origin:top center">
+              <div id="canvas-empty" style="position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center">
+                <div style="border:2px dashed rgba(0,229,255,.2);border-radius:16px;padding:48px 40px;text-align:center">
+                  <div style="width:56px;height:56px;border-radius:14px;background:rgba(0,229,255,.06);border:1px solid rgba(0,229,255,.15);display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+                    <span class="material-symbols-outlined" style="font-size:28px;color:rgba(0,229,255,.4)">add_circle</span>
+                  </div>
+                  <p style="color:#374151;font-size:14px;font-family:Inter;margin:0">Drag a component from the left panel<br/>or click to add</p>
                 </div>
               </div>
               <div id="canvas-components" style="display:flex;flex-wrap:wrap;align-items:flex-start;position:relative;min-height:800px"></div>
@@ -169,21 +197,41 @@ async function renderEditor(params) {
           </div>
         </div>
       </main>
-      <!-- Right Panel -->
-      <aside class="w-[300px] bg-surface-container border-l border-outline-variant flex flex-col h-full fixed right-0 z-20" style="top:64px;bottom:0">
-        <div class="flex border-b border-outline-variant px-2 pt-2 gap-1 bg-surface-container-highest">
-          <button class="px-4 py-2 font-body-sm text-body-sm text-on-surface border-b-2 border-primary bg-surface-container/50 rounded-t-DEFAULT">Design</button>
-          <button onclick="openExportModal()" class="px-4 py-2 font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 rounded-t-DEFAULT transition-colors">Export</button>
+
+      <!-- ── RIGHT PANEL ─────────────────────────────────────────── -->
+      <aside style="width:280px;background:#060F1A;border-left:1px solid rgba(0,229,255,.07);display:flex;flex-direction:column;position:fixed;right:0;top:56px;bottom:0;z-index:20">
+        <div style="display:flex;border-bottom:1px solid rgba(0,229,255,.07);padding:4px 8px 0;gap:2px;background:#060F1A">
+          <button style="padding:8px 14px;font-size:12px;font-weight:600;font-family:Inter;border:none;background:transparent;color:#00E5FF;border-bottom:2px solid #00E5FF;cursor:pointer;margin-bottom:-1px">Design</button>
+          <button onclick="openExportModal()" style="padding:8px 14px;font-size:12px;font-weight:600;font-family:Inter;border:none;background:transparent;color:#374151;border-bottom:2px solid transparent;cursor:pointer;transition:color .15s" onmouseover="this.style.color='#94A3B8'" onmouseout="this.style.color='#374151'">Export</button>
         </div>
-        <div id="properties-panel" class="flex-1 overflow-y-auto p-3 flex flex-col gap-4">
-          <div class="text-center text-on-surface-variant text-sm mt-8 flex flex-col items-center gap-3">
-            <span class="material-symbols-outlined text-[40px] opacity-30">touch_app</span>
-            <span>Select a component<br/>to edit its properties</span>
+        <div id="properties-panel" style="flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:12px">
+          <div style="text-align:center;color:#374151;font-size:13px;margin-top:32px;display:flex;flex-direction:column;align-items:center;gap:12px">
+            <div style="width:48px;height:48px;border-radius:12px;background:rgba(0,229,255,.04);border:1px solid rgba(0,229,255,.08);display:flex;align-items:center;justify-content:center">
+              <span class="material-symbols-outlined" style="font-size:24px;color:rgba(0,229,255,.25)">touch_app</span>
+            </div>
+            <span style="line-height:1.6">Select a component<br/>to edit its properties</span>
           </div>
         </div>
       </aside>
     </div>
   </div>`;
+
+  // Inject cyber animation styles (once per page lifecycle)
+  if (!document.getElementById('iwb-editor-styles')) {
+    const st = document.createElement('style');
+    st.id = 'iwb-editor-styles';
+    st.textContent = `
+      @keyframes iwb-drop-in {
+        0%   { outline: 3px solid rgba(0,229,255,.9); outline-offset:6px; box-shadow: 0 0 0 8px rgba(0,229,255,.14), 0 0 50px rgba(0,229,255,.2); }
+        55%  { outline: 2px solid rgba(0,229,255,.4); outline-offset:2px; }
+        100% { outline: none; outline-offset:0; }
+      }
+      .iwb-comp-added { animation: iwb-drop-in .75s cubic-bezier(.2,.9,.2,1) forwards; }
+      [data-comp-type] { user-select: none; }
+      [data-comp-type]:active { opacity: .75; transform: scale(.98); }
+    `;
+    document.head.appendChild(st);
+  }
 
   // Load project
   const project = await projectsAPI.get(projectId);
@@ -193,6 +241,7 @@ async function renderEditor(params) {
   document.getElementById('project-title-text').textContent = project.title;
   document.getElementById('sidebar-project-name').textContent = project.title;
   renderCanvas();
+  requestAnimationFrame(fitCanvas);
 
   // Auto-save every 30s
   autoSaveTimer = setInterval(()=>{ if(isDirty) saveLayout(true); }, 30000);
@@ -202,20 +251,26 @@ async function renderEditor(params) {
 }
 
 function renderComponentLibrary() {
+  const catColors = {Layout:'#4F7CFF',Content:'#00E5FF',Media:'#8B5CF6',Interactive:'#F59E0B',Sections:'#22C55E'};
   return COMPONENT_TYPES.map(cat=>`
-    <div class="mb-2">
-      <div class="text-slate-500 text-[9px] px-2 py-1 uppercase tracking-widest">${cat.cat}</div>
-      ${cat.items.map(item=>`
-        <div draggable="true" data-comp-type="${item.type}"
-          ondragstart="dragCompStart(event,'${item.type}')"
-          onclick="addComponent('${item.type}')"
-          class="flex items-center gap-2 px-2 py-2 rounded-DEFAULT cursor-pointer hover:bg-slate-800/50 hover:text-slate-200 text-slate-400 group transition-colors">
-          <div class="w-7 h-7 rounded bg-[#4F7CFF]/10 flex items-center justify-center group-hover:bg-[#4F7CFF]/20 transition-colors flex-shrink-0">
-            <span class="material-symbols-outlined text-[14px] text-[#4F7CFF]">${item.icon}</span>
-          </div>
-          <span class="text-[11px] capitalize tracking-normal flex-1">${item.label}</span>
-          <span class="material-symbols-outlined text-[12px] opacity-0 group-hover:opacity-50 transition-opacity">drag_indicator</span>
-        </div>`).join('')}
+    <div style="margin-bottom:12px">
+      <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${catColors[cat.cat]||'#4B5563'};padding:4px 6px 6px;font-family:JetBrains Mono">${cat.cat}</div>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        ${cat.items.map(item=>`
+          <div draggable="true" data-comp-type="${item.type}"
+            ondragstart="this.style.background='rgba(0,229,255,.12)';this.style.borderColor='rgba(0,229,255,.45)';this.style.boxShadow='0 0 14px rgba(0,229,255,.18)';this.style.color='#00E5FF';dragCompStart(event,'${item.type}')"
+            ondragend="this.style.background='transparent';this.style.borderColor='transparent';this.style.boxShadow='none';this.style.color='#64748B'"
+            onclick="addComponent('${item.type}')"
+            style="display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:8px;cursor:grab;color:#64748B;transition:all .15s;border:1px solid transparent"
+            onmouseover="this.style.background='rgba(0,229,255,.05)';this.style.borderColor='rgba(0,229,255,.1)';this.style.color='#E8F4FD';this.querySelector('.drag-hint').style.opacity='0.6'"
+            onmouseout="this.style.background='transparent';this.style.borderColor='transparent';this.style.color='#64748B';this.querySelector('.drag-hint').style.opacity='0.2'">
+            <div style="width:26px;height:26px;border-radius:7px;background:rgba(${catColors[cat.cat]==='#4F7CFF'?'79,124,255':catColors[cat.cat]==='#00E5FF'?'0,229,255':catColors[cat.cat]==='#8B5CF6'?'139,92,246':catColors[cat.cat]==='#F59E0B'?'245,158,11':'34,197,94'},.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s">
+              <span class="material-symbols-outlined" style="font-size:13px;color:${catColors[cat.cat]||'#4F7CFF'}">${item.icon}</span>
+            </div>
+            <span style="font-size:12px;font-family:Inter;flex:1">${item.label}</span>
+            <span class="material-symbols-outlined drag-hint" style="font-size:11px;opacity:0.2;transition:opacity .15s">drag_indicator</span>
+          </div>`).join('')}
+      </div>
     </div>`).join('');
 }
 
@@ -230,14 +285,44 @@ function renderCanvas() {
   empty.style.display='none';
   container.innerHTML = comps.map((c,i)=>renderComponentPreview(c,i)).join('');
   updateLayers();
+  requestAnimationFrame(fitCanvas);
 }
+
+// Auto-scale canvas to fit the available viewport width (like Figma/Webflow)
+function fitCanvas() {
+  const scroll   = document.getElementById('canvas-scroll');
+  const frame    = document.getElementById('canvas-frame');
+  const wrapper  = document.getElementById('canvas-wrapper');
+  const zoomEl   = document.getElementById('zoom-label');
+  if (!scroll || !frame || !wrapper) return;
+
+  const pad      = 80;                          // 40px padding each side in canvas-wrapper
+  const avail    = scroll.clientWidth - pad;
+  const scale    = Math.min(1, avail / 1200);
+
+  frame.style.transform       = `scale(${scale.toFixed(4)})`;
+  frame.style.transformOrigin = 'top center';
+
+  // Compensate for height loss caused by scale (transform doesn't affect flow)
+  const scaledH = frame.scrollHeight * scale;
+  wrapper.style.minHeight = (scaledH + pad) + 'px';
+
+  if (zoomEl) zoomEl.textContent = Math.round(scale * 100) + '%';
+}
+
+// Keep canvas fitted on window resize
+let _fitTimer = null;
+window.addEventListener('resize', () => {
+  clearTimeout(_fitTimer);
+  _fitTimer = setTimeout(fitCanvas, 80);
+});
 
 // Types that default to full-width in the canvas
 const _WIDE_TYPES = new Set(['section','container','columns','footer','navbar','banner','hero','features','pricing','testimonials','faq','cta','team','stats','cards_grid','contact','timeline','tabs','richtext','form','divider','embed','video','gallery','logo_strip','social_links','countdown','spacer','image','text','heading','blockquote','code_block']);
 
 function renderComponentPreview(c, idx) {
   const isSelected = c.id === selectedId;
-  const selStyle = isSelected ? 'outline:2px solid #4F7CFF;outline-offset:2px;' : '';
+  const selStyle = isSelected ? 'outline:2px solid rgba(0,229,255,.8);outline-offset:2px;box-shadow:0 0 0 4px rgba(0,229,255,.06);' : '';
   const isAbs = !!c.positionAbsolute;
 
   // Smart default width: layout/content blocks fill the row; interactive items are natural size
@@ -253,35 +338,35 @@ function renderComponentPreview(c, idx) {
   const label = isSelected ? `<div
     onmousedown="${isAbs ? `startCompDrag(event,'${c.id}')` : ''}"
     onclick="${isAbs ? 'event.stopPropagation()' : ''}"
-    style="position:absolute;top:-22px;left:-2px;background:#4F7CFF;color:white;font-size:10px;padding:2px 8px;border-radius:2px 2px 0 0;font-family:JetBrains Mono;display:flex;align-items:center;gap:4px;z-index:10;cursor:${isAbs?'move':'default'};user-select:none">
+    style="position:absolute;top:-22px;left:-2px;background:linear-gradient(90deg,#00C4DD,#006FE8);color:white;font-size:10px;padding:2px 10px;border-radius:4px 4px 0 0;font-family:JetBrains Mono;display:flex;align-items:center;gap:4px;z-index:10;cursor:${isAbs?'move':'default'};user-select:none;box-shadow:0 0 8px rgba(0,229,255,.3)">
     ${isAbs ? '<span class="material-symbols-outlined" style="font-size:11px">drag_pan</span>' : ''}
     <span class="material-symbols-outlined" style="font-size:12px">${getCompIcon(c.type)}</span>${c.type}
   </div>` : '';
 
-  const actions = isSelected ? `<div style="position:absolute;top:-46px;left:50%;transform:translateX(-50%);background:rgba(17,26,46,0.95);border:1px solid rgba(255,255,255,0.07);border-radius:8px;display:flex;gap:4px;padding:4px;z-index:20">
-    <button onclick="event.stopPropagation();moveComp('${c.id}',-1)" style="width:28px;height:28px;background:none;border:none;color:#94A3B8;cursor:pointer;border-radius:6px;display:flex;align-items:center;justify-content:center" title="Move up">
+  const actions = isSelected ? `<div style="position:absolute;top:-50px;left:50%;transform:translateX(-50%);background:rgba(5,11,22,0.97);backdrop-filter:blur(12px);border:1px solid rgba(0,229,255,.15);border-radius:10px;display:flex;gap:2px;padding:4px;z-index:20;box-shadow:0 8px 24px rgba(0,0,0,.6),0 0 0 1px rgba(0,229,255,.06)">
+    <button onclick="event.stopPropagation();moveComp('${c.id}',-1)" style="width:28px;height:28px;background:none;border:none;color:#64748B;cursor:pointer;border-radius:7px;display:flex;align-items:center;justify-content:center;transition:all .12s" title="Move up" onmouseover="this.style.background='rgba(0,229,255,.08)';this.style.color='#00E5FF'" onmouseout="this.style.background='none';this.style.color='#64748B'">
       <span class="material-symbols-outlined" style="font-size:16px">arrow_upward</span>
     </button>
-    <button onclick="event.stopPropagation();moveComp('${c.id}',1)" style="width:28px;height:28px;background:none;border:none;color:#94A3B8;cursor:pointer;border-radius:6px;display:flex;align-items:center;justify-content:center" title="Move down">
+    <button onclick="event.stopPropagation();moveComp('${c.id}',1)" style="width:28px;height:28px;background:none;border:none;color:#64748B;cursor:pointer;border-radius:7px;display:flex;align-items:center;justify-content:center;transition:all .12s" title="Move down" onmouseover="this.style.background='rgba(0,229,255,.08)';this.style.color='#00E5FF'" onmouseout="this.style.background='none';this.style.color='#64748B'">
       <span class="material-symbols-outlined" style="font-size:16px">arrow_downward</span>
     </button>
-    <button onclick="event.stopPropagation();duplicateComp('${c.id}')" style="width:28px;height:28px;background:none;border:none;color:#94A3B8;cursor:pointer;border-radius:6px;display:flex;align-items:center;justify-content:center" title="Duplicate">
+    <button onclick="event.stopPropagation();duplicateComp('${c.id}')" style="width:28px;height:28px;background:none;border:none;color:#64748B;cursor:pointer;border-radius:7px;display:flex;align-items:center;justify-content:center;transition:all .12s" title="Duplicate" onmouseover="this.style.background='rgba(0,229,255,.08)';this.style.color='#00E5FF'" onmouseout="this.style.background='none';this.style.color='#64748B'">
       <span class="material-symbols-outlined" style="font-size:16px">content_copy</span>
     </button>
-    <div style="width:1px;height:20px;background:#1F2A44;margin:4px 2px"></div>
-    <button onclick="event.stopPropagation();removeComp('${c.id}')" style="width:28px;height:28px;background:none;border:none;color:#EF4444;cursor:pointer;border-radius:6px;display:flex;align-items:center;justify-content:center" title="Delete">
+    <div style="width:1px;height:20px;background:rgba(0,229,255,.1);margin:4px 2px"></div>
+    <button onclick="event.stopPropagation();removeComp('${c.id}')" style="width:28px;height:28px;background:none;border:none;color:#EF4444;cursor:pointer;border-radius:7px;display:flex;align-items:center;justify-content:center;transition:all .12s" title="Delete" onmouseover="this.style.background='rgba(239,68,68,.1)'" onmouseout="this.style.background='none'">
       <span class="material-symbols-outlined" style="font-size:16px">delete</span>
     </button>
   </div>` : '';
 
   // Right-edge handle → drag to resize width
   const rHandle = isSelected ? `<div onmousedown="startCompResize(event,'${c.id}','w')" onclick="event.stopPropagation()" style="position:absolute;right:-5px;top:15%;bottom:15%;width:10px;cursor:ew-resize;z-index:25;display:flex;align-items:center;justify-content:center">
-    <div style="width:4px;height:32px;background:#4F7CFF;border-radius:2px;opacity:.85;box-shadow:0 0 6px rgba(79,124,255,.5)"></div>
+    <div style="width:4px;height:32px;background:#00E5FF;border-radius:2px;opacity:.9;box-shadow:0 0 8px rgba(0,229,255,.6)"></div>
   </div>` : '';
 
   // Bottom-edge handle → drag to resize height
   const bHandle = isSelected ? `<div onmousedown="startCompResize(event,'${c.id}','h')" onclick="event.stopPropagation()" style="position:absolute;bottom:-5px;left:15%;right:15%;height:10px;cursor:ns-resize;z-index:25;display:flex;justify-content:center;align-items:center">
-    <div style="height:4px;width:32px;background:#4F7CFF;border-radius:2px;opacity:.85;box-shadow:0 0 6px rgba(79,124,255,.5)"></div>
+    <div style="height:4px;width:32px;background:#00E5FF;border-radius:2px;opacity:.9;box-shadow:0 0 8px rgba(0,229,255,.6)"></div>
   </div>` : '';
 
   return `<div id="comp-${c.id}" onclick="selectComp('${c.id}')" style="${posStyle}${compH}cursor:pointer;${selStyle}min-height:40px;box-sizing:border-box;flex-shrink:0;overflow:visible">
@@ -296,228 +381,255 @@ function getCompIcon(type) {
 }
 
 function getCompHTML(c) {
-  const bg = c.backgroundColor||'';
-  const tc = c.textColor||'#111';
-  const pad = c.padding||'';
   switch(c.type) {
-    case 'navbar': return `<nav style="display:flex;align-items:center;justify-content:space-between;padding:16px 32px;background:${c.backgroundColor||'#fff'};${c.sticky?'position:sticky;top:0;z-index:100':''}">
-      <a href="${c.homeHref||'#'}" style="font-weight:700;font-size:1.2rem;color:${c.textColor||'#111'};text-decoration:none">${c.logo||'Brand'}</a>
-      <div style="display:flex;align-items:center;gap:24px">${(c.links||[]).map(l=>`<a href="${l.href||'#'}" style="color:${c.textColor||'#111'};font-size:15px;text-decoration:none">${l.label||'Link'}</a>`).join('')}</div>
-      ${(c.ctaButtons||[]).length?`<div style="display:flex;gap:10px">${(c.ctaButtons||[]).map(b=>`<a href="${b.href||'#'}" style="padding:8px 18px;background:${(b.variant||'solid')==='outline'?'transparent':'#4F7CFF'};color:${(b.variant||'solid')==='outline'?'#4F7CFF':'#fff'};border:${(b.variant||'solid')==='outline'?'2px solid #4F7CFF':'none'};border-radius:8px;font-size:14px;font-weight:600;text-decoration:none">${b.label||'CTA'}</a>`).join('')}</div>`:''}
+    case 'navbar': return `<nav style="display:flex;align-items:center;justify-content:space-between;padding:16px 32px;background:${c.backgroundColor||'rgba(5,11,22,.97)'};backdrop-filter:blur(20px);border-bottom:1px solid rgba(0,229,255,.08);${c.sticky?'position:sticky;top:0;z-index:100':''}">
+      <a href="${c.homeHref||'#'}" style="font-weight:800;font-size:1.2rem;color:${c.textColor||'#E8F4FD'};text-decoration:none;letter-spacing:-.02em">${c.logo||'Brand'}</a>
+      <div style="display:flex;align-items:center;gap:28px">${(c.links||[]).map(l=>`<a href="${l.href||'#'}" style="color:${c.textColor||'#94A3B8'};font-size:14px;text-decoration:none">${l.label||'Link'}</a>`).join('')}</div>
+      ${(c.ctaButtons||[]).length?`<div style="display:flex;gap:10px">${(c.ctaButtons||[]).map(b=>`<a href="${b.href||'#'}" style="padding:8px 18px;background:${(b.variant||'solid')==='outline'?'transparent':'linear-gradient(135deg,#00C4DD,#006FE8)'};color:white;border:${(b.variant||'solid')==='outline'?'1px solid rgba(0,229,255,.35)':'none'};border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;box-shadow:${(b.variant||'solid')!=='outline'?'0 0 16px rgba(0,229,255,.25)':'none'}">${b.label||'CTA'}</a>`).join('')}</div>`:''}
     </nav>`;
-    case 'hero': return `<section style="min-height:${c.minHeight||'400px'};padding:${c.padding||'80px 40px'};background:${c.backgroundColor||'#0f172a'};display:flex;align-items:center;justify-content:center;text-align:${c.layout==='centered'?'center':'left'}">
-      <div style="max-width:700px">
-        ${c.eyebrow?`<span style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:${c.eyebrowColor||'#4F7CFF'};background:rgba(79,124,255,.1);border-radius:999px;padding:4px 14px;display:inline-block;margin-bottom:16px">${c.eyebrow}</span>`:''}
-        <h1 style="font-size:clamp(2rem,5vw,3.5rem);font-weight:800;line-height:1.1;color:${c.textColor||'#fff'};margin-bottom:16px">${c.title||'Your Headline Here'}</h1>
-        ${c.subtitle?`<p style="font-size:1.1rem;color:${c.subtitleColor||c.textColor||'#94A3B8'};opacity:.85;line-height:1.7;margin-bottom:32px">${c.subtitle}</p>`:''}
-        ${(c.buttons||[]).map(b=>`<a href="${b.href||'#'}" style="display:inline-block;padding:${{sm:'8px 16px',md:'12px 24px',lg:'16px 32px'}[b.size||'md']||'12px 24px'};background:${b.backgroundColor||'#4F7CFF'};color:${b.textColor||'#fff'};border-radius:8px;font-weight:600;text-decoration:none;margin-right:10px;${b.variant==='outline'?'background:transparent;border:2px solid '+(b.backgroundColor||'#4F7CFF')+';color:'+(b.backgroundColor||'#4F7CFF'):''}">${b.label||'CTA'}</a>`).join('')}
+    case 'hero': return `<section style="min-height:${c.minHeight||'480px'};padding:${c.padding||'100px 48px'};background:${c.backgroundColor||'#030B14'};${c.backgroundImage?'background-image:url('+c.backgroundImage+');background-size:cover;background-position:center;':''}display:flex;align-items:center;justify-content:center;text-align:${c.layout==='centered'?'center':'left'};position:relative;overflow:hidden">
+      ${!c.backgroundImage?`<div style="position:absolute;inset:0;background-image:linear-gradient(rgba(0,229,255,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,.018) 1px,transparent 1px);background-size:40px 40px;pointer-events:none"></div><div style="position:absolute;top:20%;left:10%;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(0,229,255,.06),transparent 70%);filter:blur(60px);pointer-events:none"></div><div style="position:absolute;bottom:10%;right:5%;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(79,124,255,.08),transparent 70%);filter:blur(50px);pointer-events:none"></div>`:''}
+      <div style="max-width:780px;position:relative;z-index:1">
+        ${c.eyebrow?`<div style="display:inline-flex;align-items:center;gap:8px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.2);border-radius:999px;padding:5px 16px;margin-bottom:24px"><span style="width:6px;height:6px;border-radius:50%;background:#00E5FF;box-shadow:0 0 6px #00E5FF"></span><span style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:${c.eyebrowColor||'#00E5FF'}">${c.eyebrow}</span></div>`:''}
+        <h1 style="font-size:clamp(2.2rem,5vw,3.8rem);font-weight:900;line-height:1.08;color:${c.textColor||'#E8F4FD'};margin:0 0 20px;letter-spacing:-.03em">${c.title||'Your Headline Here'}</h1>
+        ${c.subtitle?`<p style="font-size:1.15rem;color:${c.subtitleColor||'#64748B'};line-height:1.75;margin:0 0 36px${c.layout==='centered'?';max-width:560px;margin-left:auto;margin-right:auto':''}">${c.subtitle}</p>`:''}
+        <div style="display:flex;flex-wrap:wrap;gap:12px;${c.layout==='centered'?'justify-content:center':''}">
+          ${(c.buttons||[]).map(b=>`<a href="${b.href||'#'}" style="display:inline-block;padding:${{sm:'9px 20px',md:'13px 28px',lg:'16px 36px'}[b.size||'md']||'13px 28px'};background:${b.variant==='outline'?'transparent':b.backgroundColor?b.backgroundColor:'linear-gradient(135deg,#00C4DD,#006FE8)'};color:${b.textColor||'white'};border-radius:10px;font-weight:700;text-decoration:none;font-size:15px;${b.variant==='outline'?'border:1px solid rgba(0,229,255,.4);color:#00E5FF;':'border:none;box-shadow:0 0 24px rgba(0,229,255,.25)'}">${b.label||'Get Started'}</a>`).join('')}
+        </div>
       </div>
     </section>`;
-    case 'section': return `<section style="padding:${c.padding||'64px 40px'};background:${c.backgroundColor||'#fff'};${c.backgroundImage?'background-image:url('+c.backgroundImage+');background-size:cover;background-position:center':''}${c.width?';width:'+c.width:''}${c.maxWidth?';max-width:'+c.maxWidth+';margin-left:auto;margin-right:auto':''}${c.minHeight?';min-height:'+c.minHeight:''}${c.height?';height:'+c.height:''}">
+    case 'section': return `<section style="padding:${c.padding||'64px 40px'};background:${c.backgroundColor||'#030B14'};${c.backgroundImage?'background-image:url('+c.backgroundImage+');background-size:cover;background-position:center':''}${c.width?';width:'+c.width:''}${c.maxWidth?';max-width:'+c.maxWidth+';margin-left:auto;margin-right:auto':''}${c.minHeight?';min-height:'+c.minHeight:''}${c.height?';height:'+c.height:''}">
       ${(c.children||[]).map(getCompHTML).join('')}
     </section>`;
     case 'container': return `<div style="display:flex;flex-direction:${c.direction||'row'};gap:${c.gap||'16px'};padding:${c.padding||'0'};flex-wrap:wrap${c.width?';width:'+c.width:''}${c.maxWidth?';max-width:'+c.maxWidth+';margin-left:auto;margin-right:auto':''}${c.minHeight?';min-height:'+c.minHeight:''}${c.height?';height:'+c.height:''}">
       ${(c.children||[]).map(getCompHTML).join('')}
     </div>`;
-    case 'text': return `<${c.tag||'p'} style="font-size:${c.fontSize||'16px'};font-weight:${c.fontWeight||'400'};color:${c.color||'#374151'};text-align:${c.align||'left'};padding:${c.padding||'8px 0'};margin:${c.margin||'0'}">${c.content||'Your text here'}</${c.tag||'p'}>`;
+    case 'text': return `<${c.tag||'p'} style="font-size:${c.fontSize||'16px'};font-weight:${c.fontWeight||'400'};color:${c.color||'#94A3B8'};text-align:${c.align||'left'};padding:${c.padding||'8px 0'};margin:${c.margin||'0'};line-height:1.7;font-family:Inter,sans-serif">${c.content||'Your text here'}</${c.tag||'p'}>`;
     case 'heading': return `<div style="padding:${c.padding||'16px 0'};text-align:${c.align||'left'}">
-      ${c.eyebrow?`<span style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:${c.eyebrowColor||'#4F7CFF'};background:rgba(79,124,255,.1);border-radius:999px;padding:4px 12px;display:inline-block;margin-bottom:12px">${c.eyebrow}</span>`:''}
-      <${c.tag||'h2'} style="font-size:clamp(1.75rem,3.5vw,2.75rem);font-weight:800;line-height:1.15;color:${c.titleColor||'#111827'};margin-bottom:12px">${c.title||'Section Title'}</${c.tag||'h2'}>
-      ${c.subtitle?`<p style="font-size:1.1rem;color:${c.subtitleColor||'#6B7280'};line-height:1.7;max-width:600px;${c.align==='center'?'margin:0 auto':''}">${c.subtitle}</p>`:''}
+      ${c.eyebrow?`<div style="display:inline-flex;align-items:center;gap:7px;background:rgba(0,229,255,.07);border:1px solid rgba(0,229,255,.18);border-radius:999px;padding:4px 14px;margin-bottom:14px"><span style="width:5px;height:5px;border-radius:50%;background:#00E5FF"></span><span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${c.eyebrowColor||'#00E5FF'}">${c.eyebrow}</span></div>`:''}
+      <${c.tag||'h2'} style="font-size:clamp(1.75rem,3.5vw,2.75rem);font-weight:900;line-height:1.12;color:${c.titleColor||'#E8F4FD'};margin:0 0 12px;letter-spacing:-.025em;font-family:Inter,sans-serif">${c.title||'Section Title'}</${c.tag||'h2'}>
+      ${c.subtitle?`<p style="font-size:1.1rem;color:${c.subtitleColor||'#64748B'};line-height:1.7;max-width:600px;margin:0${c.align==='center'?';margin-left:auto;margin-right:auto':''};font-family:Inter,sans-serif">${c.subtitle}</p>`:''}
     </div>`;
     case 'image': return `<div style="padding:${c.margin||'0'}">
-      ${c.src?`<img src="${c.src}" alt="${c.alt||''}" style="width:${c.width||'100%'};border-radius:${c.borderRadius||'0'};display:block" loading="lazy">`:`<div style="background:#e5e7eb;border-radius:${c.borderRadius||'0'};width:${c.width||'100%'};height:200px;display:flex;align-items:center;justify-content:center;color:#9CA3AF"><span class="material-symbols-outlined" style="font-size:48px">image</span></div>`}
-      ${c.caption?`<p style="text-align:center;font-size:13px;color:#9CA3AF;margin-top:8px">${c.caption}</p>`:''}
+      ${c.src?`<img src="${c.src}" alt="${c.alt||''}" style="width:${c.width||'100%'};border-radius:${c.borderRadius||'8px'};display:block;box-shadow:0 0 0 1px rgba(0,229,255,.1),0 8px 32px rgba(0,0,0,.4)" loading="lazy">`:`<div style="background:#060F1A;border:1px dashed rgba(0,229,255,.2);border-radius:${c.borderRadius||'8px'};width:${c.width||'100%'};height:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#374151"><span class="material-symbols-outlined" style="font-size:40px;color:rgba(0,229,255,.3)">image</span><span style="font-size:12px;font-family:Inter">Add image URL in properties</span></div>`}
+      ${c.caption?`<p style="text-align:center;font-size:13px;color:#4B5563;margin-top:8px;font-family:Inter">${c.caption}</p>`:''}
     </div>`;
-    case 'button': return `<div style="padding:8px 0"><a href="${c.href||'#'}" style="display:inline-block;padding:${{sm:'8px 16px',md:'12px 24px',lg:'16px 32px',xl:'18px 40px'}[c.size||'md']||'12px 24px'};background:${c.variant==='outline'?'transparent':c.backgroundColor||'#4F7CFF'};color:${c.variant==='outline'?c.backgroundColor||'#4F7CFF':c.textColor||'#fff'};border-radius:${c.borderRadius||'8px'};border:${c.variant==='outline'?'2px solid '+(c.backgroundColor||'#4F7CFF'):'none'};font-weight:600;text-decoration:none${c.fullWidth?';width:100%;text-align:center':''}">${c.label||'Button'}</a></div>`;
-    case 'divider': return `<hr style="border:none;border-top:${c.thickness||1}px ${c.style||'solid'} ${c.color||'#e5e7eb'};margin:${c.margin||'16px 0'}">`;
+    case 'button': return `<div style="padding:10px 0"><a href="${c.href||'#'}" style="display:inline-block;padding:${{sm:'9px 18px',md:'13px 26px',lg:'16px 34px',xl:'18px 42px'}[c.size||'md']||'13px 26px'};background:${c.variant==='outline'?'transparent':c.backgroundColor?c.backgroundColor:'linear-gradient(135deg,#00C4DD,#006FE8)'};color:${c.textColor||'white'};border-radius:${c.borderRadius||'9px'};border:${c.variant==='outline'?'1px solid rgba(0,229,255,.4)':'none'};font-weight:700;text-decoration:none;font-family:Inter,sans-serif;font-size:15px;letter-spacing:-.01em;${c.variant!=='outline'&&!c.backgroundColor?'box-shadow:0 0 22px rgba(0,229,255,.25),0 4px 16px rgba(0,100,220,.25)':''}${c.fullWidth?';display:block;text-align:center':''}">${c.label||'Button'}</a></div>`;
+    case 'divider': return `<div style="height:${c.thickness||1}px;background:${c.style==='dashed'?'none':c.color?c.color:'linear-gradient(90deg,transparent,rgba(0,229,255,.3),transparent)'};${c.style==='dashed'?'border-top:1px dashed '+(c.color||'rgba(0,229,255,.25)'):''}margin:${c.margin||'16px 0'}"></div>`;
     case 'spacer': return `<div style="height:${c.height||32}px"></div>`;
-    case 'features': return `<section style="padding:${c.padding||'80px 40px'};background:${c.backgroundColor||'#f8fafc'}">
-      ${c.title?`<div style="text-align:${c.align||'left'};margin-bottom:48px"><h2 style="font-size:2.5rem;font-weight:800;color:#111827;margin-bottom:12px">${c.title}</h2>${c.subtitle?`<p style="color:#6B7280;font-size:1.1rem">${c.subtitle}</p>`:''}</div>`:''}
-      <div style="display:grid;grid-template-columns:repeat(${c.columns||3},1fr);gap:${c.gap||'24px'}">
-        ${(c.items||[]).map(item=>`<div style="padding:28px;background:${c.cardBackground||'#fff'};border-radius:12px;${c.cardBorder?'border:1px solid '+c.cardBorder:''}">
-          ${item.icon?`<div style="width:52px;height:52px;background:rgba(79,124,255,.1);border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:18px;font-size:28px">${item.icon}</div>`:''}
-          <h3 style="font-size:18px;font-weight:700;margin-bottom:10px;color:#111827">${item.title||''}</h3>
-          <p style="font-size:15px;color:#6B7280;line-height:1.7">${item.description||''}</p>
+    case 'features': return `<section style="padding:${c.padding||'80px 40px'};background:${c.backgroundColor||'#030B14'}">
+      ${c.title?`<div style="text-align:${c.align||'left'};margin-bottom:52px">
+        <h2 style="font-size:clamp(1.8rem,3vw,2.5rem);font-weight:900;color:#E8F4FD;margin:0 0 12px;letter-spacing:-.025em;font-family:Inter,sans-serif">${c.title}</h2>
+        ${c.subtitle?`<p style="color:#64748B;font-size:1.1rem;font-family:Inter;line-height:1.7;max-width:560px;margin:0${c.align==='center'?';margin-left:auto;margin-right:auto':''}">${c.subtitle}</p>`:''}
+      </div>`:''}
+      <div style="display:grid;grid-template-columns:repeat(${c.columns||3},1fr);gap:${c.gap||'20px'}">
+        ${(c.items||[]).map(item=>`<div style="padding:28px;background:${c.cardBackground||'#060F1A'};border-radius:16px;border:${c.cardBorder?'1px solid '+c.cardBorder:'1px solid rgba(0,229,255,.08)'};transition:border-color .2s;position:relative;overflow:hidden">
+          <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,229,255,.2),transparent)"></div>
+          ${item.icon?`<div style="width:48px;height:48px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.15);border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:18px;font-size:22px">${item.icon}</div>`:''}
+          <h3 style="font-size:17px;font-weight:700;margin:0 0 10px;color:#E8F4FD;font-family:Inter,sans-serif;letter-spacing:-.01em">${item.title||''}</h3>
+          <p style="font-size:14px;color:#64748B;line-height:1.7;margin:0;font-family:Inter,sans-serif">${item.description||''}</p>
         </div>`).join('')}
       </div>
     </section>`;
-    case 'footer': return `<footer style="padding:48px 40px;background:${c.backgroundColor||'#0f172a'}">
+    case 'footer': return `<footer style="padding:56px 40px 32px;background:${c.backgroundColor||'#030B14'};border-top:1px solid rgba(0,229,255,.08);position:relative;overflow:hidden">
+      <div style="position:absolute;top:0;left:20%;right:20%;height:1px;background:linear-gradient(90deg,transparent,rgba(0,229,255,.3),transparent)"></div>
       <div style="max-width:1200px;margin:0 auto">
-        <div style="font-size:1.2rem;font-weight:700;color:${c.logoColor||c.textColor||'#e5e7eb'};margin-bottom:12px">${c.logo||'Brand'}</div>
-        ${c.description?`<p style="font-size:14px;color:${c.textColor||'#94A3B8'};opacity:.65;max-width:280px;line-height:1.7">${c.description}</p>`:''}
-        <div style="display:flex;gap:40px;margin-top:32px;flex-wrap:wrap">
-          ${(c.columns||[]).map(col=>`<div><div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:${c.textColor||'#e5e7eb'};opacity:.5;margin-bottom:14px">${col.title||''}</div>
-          <div style="display:flex;flex-direction:column;gap:10px">${(col.links||[]).map(l=>`<a href="${l.href||'#'}" style="color:${c.textColor||'#e5e7eb'};opacity:.7;font-size:15px;text-decoration:none">${l.label||''}</a>`).join('')}</div></div>`).join('')}
+        <div style="font-size:1.3rem;font-weight:800;color:${c.logoColor||c.textColor||'#E8F4FD'};margin-bottom:10px;letter-spacing:-.02em;font-family:Inter,sans-serif">${c.logo||'Brand'}</div>
+        ${c.description?`<p style="font-size:14px;color:${c.textColor||'#4B5563'};max-width:280px;line-height:1.7;margin:0 0 32px;font-family:Inter,sans-serif">${c.description}</p>`:''}
+        <div style="display:flex;gap:48px;margin-top:${c.description?'0':'32px'};flex-wrap:wrap">
+          ${(c.columns||[]).map(col=>`<div><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#00E5FF;margin-bottom:16px;font-family:JetBrains Mono,monospace">${col.title||''}</div>
+          <div style="display:flex;flex-direction:column;gap:10px">${(col.links||[]).map(l=>`<a href="${l.href||'#'}" style="color:${c.textColor||'#4B5563'};font-size:14px;text-decoration:none;font-family:Inter;transition:color .15s">${l.label||''}</a>`).join('')}</div></div>`).join('')}
         </div>
-        <div style="border-top:1px solid rgba(255,255,255,.08);margin-top:40px;padding-top:24px;font-size:13px;color:${c.textColor||'#e5e7eb'};opacity:.5">${c.copyright||'© 2025'}</div>
+        <div style="border-top:1px solid rgba(0,229,255,.07);margin-top:40px;padding-top:24px;font-size:13px;color:#374151;font-family:Inter,sans-serif">${c.copyright||'© 2025 All rights reserved.'}</div>
       </div>
     </footer>`;
-    case 'pricing': return `<section style="padding:${c.padding||'80px 40px'};background:${c.backgroundColor||'#fff'}">
-      ${c.title?`<div style="text-align:${c.align||'center'};margin-bottom:48px"><h2 style="font-size:2.5rem;font-weight:800;color:#111827">${c.title}</h2>${c.subtitle?`<p style="color:#6B7280;font-size:1.1rem;margin-top:12px">${c.subtitle}</p>`:''}</div>`:''}
-      <div style="display:grid;grid-template-columns:repeat(${Math.min((c.plans||[]).length,3)},1fr);gap:24px;max-width:900px;margin:0 auto">
-        ${(c.plans||[]).map(p=>`<div style="padding:32px;border-radius:16px;background:#fff;border:${(p.popular||p.highlighted)?'2px solid '+(p.accentColor||'#4F7CFF'):'1px solid #e5e7eb'};position:relative">
-          ${(p.popular||p.highlighted)?`<div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:${p.accentColor||'#4F7CFF'};color:white;padding:3px 14px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap">${p.popularLabel||'Popular'}</div>`:''}
-          <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:${p.accentColor||'#4F7CFF'};opacity:.7">${p.name||'Plan'}</div>
-          <div style="font-size:3rem;font-weight:800;color:#111827;margin:12px 0 4px">${p.currency||'$'}${p.price||'0'}</div>
-          <div style="font-size:14px;color:#9CA3AF;margin-bottom:24px">${p.period||'/month'}</div>
-          <ul style="list-style:none;padding:0;margin:0 0 24px">
-            ${(p.features||[]).filter(f=>typeof f==='string'||f.included!==false).map(f=>`<li style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:15px;color:#374151"><span style="color:#22C55E;font-weight:700">✓</span>${typeof f==='string'?f:(f.text||f.label||'')}</li>`).join('')}
+    case 'pricing': return `<section style="padding:${c.padding||'80px 40px'};background:${c.backgroundColor||'#030B14'}">
+      ${c.title?`<div style="text-align:${c.align||'center'};margin-bottom:52px">
+        <h2 style="font-size:clamp(1.8rem,3vw,2.5rem);font-weight:900;color:#E8F4FD;margin:0 0 12px;letter-spacing:-.025em;font-family:Inter,sans-serif">${c.title}</h2>
+        ${c.subtitle?`<p style="color:#64748B;font-size:1.05rem;margin:0;font-family:Inter,sans-serif;line-height:1.7">${c.subtitle}</p>`:''}
+      </div>`:''}
+      <div style="display:grid;grid-template-columns:repeat(${Math.min((c.plans||[]).length,3)||1},1fr);gap:20px;max-width:960px;margin:0 auto">
+        ${(c.plans||[]).map(p=>`<div style="padding:32px;border-radius:18px;background:#060F1A;border:${(p.popular||p.highlighted)?'1px solid '+(p.accentColor||'#00E5FF'):'1px solid rgba(0,229,255,.08)'};position:relative;${(p.popular||p.highlighted)?'box-shadow:0 0 40px rgba(0,229,255,.08);':''}overflow:hidden">
+          ${(p.popular||p.highlighted)?`<div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,${p.accentColor||'#00E5FF'},transparent)"></div><div style="position:absolute;top:16px;right:16px;background:linear-gradient(135deg,#00C4DD,#006FE8);color:white;padding:3px 12px;border-radius:999px;font-size:10px;font-weight:700;letter-spacing:.05em">${p.popularLabel||'POPULAR'}</div>`:''}
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${p.accentColor||'#00E5FF'};font-family:JetBrains Mono;margin-bottom:12px">${p.name||'Plan'}</div>
+          <div style="font-size:3rem;font-weight:900;color:#E8F4FD;line-height:1;letter-spacing:-.03em;font-family:Inter,sans-serif">${p.currency||'$'}${p.price||'0'}<span style="font-size:1rem;font-weight:400;color:#374151">${p.period||'/mo'}</span></div>
+          ${p.description?`<p style="font-size:14px;color:#4B5563;margin:12px 0 0;font-family:Inter;line-height:1.6">${p.description}</p>`:''}
+          <div style="border-top:1px solid rgba(0,229,255,.06);margin:20px 0"></div>
+          <ul style="list-style:none;padding:0;margin:0 0 24px;display:flex;flex-direction:column;gap:10px">
+            ${(p.features||[]).filter(f=>typeof f==='string'||f.included!==false).map(f=>`<li style="display:flex;align-items:flex-start;gap:10px;font-size:14px;color:#64748B;font-family:Inter"><span style="color:#00E5FF;font-weight:700;flex-shrink:0;margin-top:1px">✓</span>${typeof f==='string'?f:(f.text||f.label||'')}</li>`).join('')}
           </ul>
-          ${(p.cta||(p.button&&p.button.label))?`<a href="${p.ctaHref||(p.button&&p.button.href)||'#'}" style="display:block;text-align:center;padding:12px;background:${((p.ctaVariant||(p.button&&p.button.variant)||'solid')==='outline')?'transparent':p.accentColor||'#4F7CFF'};color:${((p.ctaVariant||(p.button&&p.button.variant)||'solid')==='outline')?p.accentColor||'#4F7CFF':'white'};border:${((p.ctaVariant||(p.button&&p.button.variant)||'solid')==='outline')?'2px solid '+(p.accentColor||'#4F7CFF'):'none'};border-radius:10px;font-weight:600;text-decoration:none">${p.cta||(p.button&&p.button.label)||'Get started'}</a>`:''}
+          ${(p.cta||(p.button&&p.button.label))?`<a href="${p.ctaHref||(p.button&&p.button.href)||'#'}" style="display:block;text-align:center;padding:12px;background:${(p.popular||p.highlighted)?'linear-gradient(135deg,#00C4DD,#006FE8)':'rgba(0,229,255,.08)'};color:${(p.popular||p.highlighted)?'white':(p.accentColor||'#00E5FF')};border:${(p.popular||p.highlighted)?'none':'1px solid rgba(0,229,255,.15)'};border-radius:10px;font-weight:700;text-decoration:none;font-family:Inter;font-size:14px">${p.cta||(p.button&&p.button.label)||'Get started'}</a>`:''}
         </div>`).join('')}
       </div>
     </section>`;
-    case 'cta': return `<section style="padding:${c.padding||'80px 40px'};background:${c.backgroundColor||'#0f172a'};text-align:${c.align||'center'}">
-      ${c.eyebrow?`<span style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:${c.eyebrowColor||'#4F7CFF'};background:rgba(79,124,255,.1);border-radius:999px;padding:4px 14px;display:inline-block;margin-bottom:16px">${c.eyebrow}</span>`:''}
-      <h2 style="font-size:clamp(1.75rem,3vw,2.5rem);font-weight:800;color:${c.textColor||'#fff'};margin-bottom:16px">${c.title||'Ready to get started?'}</h2>
-      ${c.subtitle?`<p style="font-size:1.1rem;color:${c.textColor||'#fff'};opacity:.8;line-height:1.7;max-width:560px;${c.align==='center'?'margin:0 auto':''}margin-bottom:32px">${c.subtitle}</p>`:''}
-      ${(c.buttons||[]).map(b=>`<a href="${b.href||'#'}" style="display:inline-block;padding:16px 32px;background:${b.variant==='outline'?'transparent':b.backgroundColor||'#4F7CFF'};color:${b.variant==='outline'?b.backgroundColor||'#4F7CFF':b.textColor||'#fff'};border-radius:8px;font-weight:600;text-decoration:none;margin:0 6px;border:${b.variant==='outline'?'2px solid '+(b.backgroundColor||'#4F7CFF'):'none'}">${b.label||'CTA'}</a>`).join('')}
+    case 'cta': return `<section style="padding:${c.padding||'100px 48px'};background:${c.backgroundColor||'#030B14'};text-align:${c.align||'center'};position:relative;overflow:hidden">
+      <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,rgba(0,229,255,.06),transparent 65%);pointer-events:none"></div>
+      <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,229,255,.25),transparent)"></div>
+      <div style="position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,229,255,.15),transparent)"></div>
+      <div style="position:relative;z-index:1;max-width:700px;${c.align==='center'?'margin:0 auto':''}">
+        ${c.eyebrow?`<div style="display:inline-flex;align-items:center;gap:7px;background:rgba(0,229,255,.07);border:1px solid rgba(0,229,255,.18);border-radius:999px;padding:5px 16px;margin-bottom:20px"><span style="width:5px;height:5px;border-radius:50%;background:#00E5FF"></span><span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:${c.eyebrowColor||'#00E5FF'}">${c.eyebrow}</span></div>`:''}
+        <h2 style="font-size:clamp(1.9rem,3.5vw,2.8rem);font-weight:900;color:${c.textColor||'#E8F4FD'};margin:0 0 18px;letter-spacing:-.03em;line-height:1.1;font-family:Inter,sans-serif">${c.title||'Ready to get started?'}</h2>
+        ${c.subtitle?`<p style="font-size:1.1rem;color:#64748B;line-height:1.75;max-width:520px;margin:0 auto 36px;font-family:Inter,sans-serif">${c.subtitle}</p>`:''}
+        <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:${c.align==='center'?'center':'flex-start'}">
+          ${(c.buttons||[]).map(b=>`<a href="${b.href||'#'}" style="display:inline-block;padding:14px 32px;background:${b.variant==='outline'?'transparent':b.backgroundColor?b.backgroundColor:'linear-gradient(135deg,#00C4DD,#006FE8)'};color:${b.textColor||'white'};border-radius:10px;font-weight:700;text-decoration:none;font-family:Inter;font-size:15px;${b.variant==='outline'?'border:1px solid rgba(0,229,255,.35);color:#00E5FF;':'border:none;box-shadow:0 0 24px rgba(0,229,255,.25);'}">${b.label||'Get started'}</a>`).join('')}
+        </div>
+      </div>
     </section>`;
-    case 'testimonials': return `<section style="padding:${c.padding||'80px 40px'};background:${c.backgroundColor||'#fff'}">
-      ${c.title?`<div style="text-align:center;margin-bottom:48px"><h2 style="font-size:2.5rem;font-weight:800;color:#111827">${c.title}</h2></div>`:''}
-      <div style="display:grid;grid-template-columns:repeat(${c.columns||3},1fr);gap:24px">
-        ${(c.items||[]).map(t=>`<div style="padding:32px;background:${c.cardBackground||'#f8fafc'};border-radius:16px">
-          <div style="color:#f59e0b;margin-bottom:12px">${'★'.repeat(t.rating||5)}</div>
-          <p style="font-size:1.05rem;line-height:1.7;color:#374151;margin-bottom:24px">"${t.quote||''}"</p>
-          <div style="display:flex;align-items:center;gap:12px">
-            ${(t.avatar||t.image)?`<img src="${t.avatar||t.image}" alt="${t.author||t.name||''}" style="width:40px;height:40px;border-radius:50%;object-fit:cover">`:`<div style="width:40px;height:40px;border-radius:50%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:#6B7280">${(t.author||t.name||'?').charAt(0)}</div>`}
-            <div><div style="font-weight:600;font-size:15px;color:#111827">${t.author||t.name||''}</div><div style="font-size:13px;color:#9CA3AF">${t.role||''}</div></div>
+    case 'testimonials': return `<section style="padding:${c.padding||'80px 40px'};background:${c.backgroundColor||'#030B14'}">
+      ${c.title?`<div style="text-align:center;margin-bottom:52px"><h2 style="font-size:clamp(1.8rem,3vw,2.5rem);font-weight:900;color:#E8F4FD;margin:0;letter-spacing:-.025em;font-family:Inter,sans-serif">${c.title}</h2></div>`:''}
+      <div style="display:grid;grid-template-columns:repeat(${c.columns||3},1fr);gap:20px">
+        ${(c.items||[]).map(t=>`<div style="padding:28px;background:${c.cardBackground||'#060F1A'};border-radius:16px;border:1px solid rgba(0,229,255,.08);position:relative;overflow:hidden">
+          <div style="color:#F59E0B;margin-bottom:14px;letter-spacing:2px;font-size:14px">${'★'.repeat(t.rating||5)}</div>
+          <p style="font-size:1rem;line-height:1.75;color:#94A3B8;margin:0 0 24px;font-family:Inter,sans-serif;font-style:italic">"${t.quote||''}"</p>
+          <div style="display:flex;align-items:center;gap:12px;border-top:1px solid rgba(0,229,255,.06);padding-top:20px">
+            ${(t.avatar||t.image)?`<img src="${t.avatar||t.image}" alt="${t.author||t.name||''}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid rgba(0,229,255,.2)">`:`<div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,rgba(0,196,221,.2),rgba(79,124,255,.2));border:1px solid rgba(0,229,255,.2);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:#00E5FF">${(t.author||t.name||'?').charAt(0)}</div>`}
+            <div><div style="font-weight:600;font-size:14px;color:#E8F4FD;font-family:Inter">${t.author||t.name||''}</div><div style="font-size:12px;color:#374151;font-family:Inter;margin-top:2px">${t.role||''}</div></div>
           </div>
         </div>`).join('')}
       </div>
     </section>`;
-    case 'faq': return `<section style="padding:${c.padding||'80px 40px'};background:${c.backgroundColor||'#fff'}">
-      ${c.title?`<div style="text-align:center;margin-bottom:48px"><h2 style="font-size:2.5rem;font-weight:800;color:#111827">${c.title}</h2></div>`:''}
-      <div style="max-width:760px;margin:0 auto">
-        ${(c.items||[]).map(f=>`<div style="border-bottom:1px solid #e5e7eb;padding:20px 0">
-          <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='block'?'none':'block'">
-            <span style="font-size:16px;font-weight:600;color:#111827">${f.question||''}</span>
-            <span style="font-size:20px;color:${c.accentColor||'#4F7CFF'}">+</span>
+    case 'faq': return `<section style="padding:${c.padding||'80px 40px'};background:${c.backgroundColor||'#030B14'}">
+      ${c.title?`<div style="text-align:center;margin-bottom:52px"><h2 style="font-size:clamp(1.8rem,3vw,2.5rem);font-weight:900;color:#E8F4FD;margin:0;letter-spacing:-.025em;font-family:Inter,sans-serif">${c.title}</h2></div>`:''}
+      <div style="max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:8px">
+        ${(c.items||[]).map(f=>`<div style="background:#060F1A;border:1px solid rgba(0,229,255,.08);border-radius:12px;overflow:hidden">
+          <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;padding:20px 24px" onclick="const a=this.nextElementSibling;a.style.display=a.style.display==='block'?'none':'block';this.querySelector('.faq-icon').textContent=a.style.display==='block'?'−':'+'">
+            <span style="font-size:15px;font-weight:600;color:#E8F4FD;font-family:Inter;letter-spacing:-.01em">${f.question||''}</span>
+            <span class="faq-icon" style="font-size:22px;color:${c.accentColor||'#00E5FF'};font-weight:300;flex-shrink:0;margin-left:16px;line-height:1">+</span>
           </div>
-          <div style="display:none;padding-top:12px;font-size:15px;line-height:1.7;color:#6B7280">${f.answer||''}</div>
+          <div style="display:none;padding:0 24px 20px;font-size:14px;line-height:1.75;color:#64748B;font-family:Inter,sans-serif">${f.answer||''}</div>
         </div>`).join('')}
       </div>
     </section>`;
-    case 'stats': return `<section style="padding:${c.padding||'80px 40px'};background:${c.backgroundColor||'#0f172a'};text-align:center">
-      ${c.title?`<h2 style="font-size:2.5rem;font-weight:800;color:${c.textColor||'#fff'};margin-bottom:48px">${c.title}</h2>`:''}
-      <div style="display:grid;grid-template-columns:repeat(${c.columns||4},1fr);gap:32px;max-width:900px;margin:0 auto">
-        ${(c.items||[]).map(s=>`<div>
-          ${s.icon?`<div style="font-size:2rem;margin-bottom:12px">${s.icon}</div>`:''}
-          <div style="font-size:clamp(2rem,4vw,3.5rem);font-weight:800;color:${c.accentColor||'#4F7CFF'};line-height:1">${s.prefix||''}${s.value||'0'}${s.suffix||''}</div>
-          <div style="font-size:15px;color:${c.textColor||'#fff'};opacity:.7;margin-top:8px">${s.label||''}</div>
+    case 'stats': return `<section style="padding:${c.padding||'80px 40px'};background:${c.backgroundColor||'#030B14'};text-align:center;position:relative;overflow:hidden">
+      <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 100%,rgba(0,229,255,.05),transparent 60%);pointer-events:none"></div>
+      ${c.title?`<h2 style="font-size:clamp(1.8rem,3vw,2.5rem);font-weight:900;color:${c.textColor||'#E8F4FD'};margin:0 0 52px;letter-spacing:-.025em;font-family:Inter,sans-serif;position:relative">${c.title}</h2>`:''}
+      <div style="display:grid;grid-template-columns:repeat(${c.columns||4},1fr);gap:2px;max-width:960px;margin:0 auto;position:relative">
+        ${(c.items||[]).map((s,i)=>`<div style="padding:32px 20px;background:#060F1A;${i===0?'border-radius:16px 0 0 16px':''}${i===(c.items||[]).length-1?'border-radius:0 16px 16px 0':''}border:1px solid rgba(0,229,255,.08)">
+          ${s.icon?`<div style="font-size:1.8rem;margin-bottom:12px">${s.icon}</div>`:''}
+          <div style="font-size:clamp(2.2rem,4vw,3.5rem);font-weight:900;color:${c.accentColor||'#00E5FF'};line-height:1;letter-spacing:-.04em;font-family:Inter,sans-serif;text-shadow:0 0 30px rgba(0,229,255,.3)">${s.prefix||''}${s.value||'0'}${s.suffix||''}</div>
+          <div style="font-size:14px;color:${c.textColor||'#4B5563'};margin-top:10px;font-family:Inter,sans-serif;font-weight:500">${s.label||''}</div>
         </div>`).join('')}
       </div>
     </section>`;
-    case 'richtext': return `<div style="padding:${c.padding||'0'};color:${c.textColor||'inherit'}">${c.html||'<p>Rich text content here.</p>'}</div>`;
-    case 'blockquote': return `<blockquote style="border-left:4px solid ${c.accentColor||'#4F7CFF'};padding:16px 24px;background:${c.backgroundColor||'rgba(79,124,255,.05)'};border-radius:0 8px 8px 0;font-size:1.1rem;font-style:italic;color:${c.textColor||'#111827'}">
-      ${c.text||'Quote text'}<cite style="display:block;font-size:14px;margin-top:12px;opacity:.7;font-style:normal">— ${c.author||'Author'}</cite>
+    case 'richtext': return `<div style="padding:${c.padding||'0'};color:${c.textColor||'#94A3B8'};font-family:Inter,sans-serif;line-height:1.75">${c.html||'<p>Rich text content here.</p>'}</div>`;
+    case 'blockquote': return `<blockquote style="border-left:3px solid ${c.accentColor||'#00E5FF'};padding:20px 28px;background:${c.backgroundColor||'rgba(0,229,255,.04)'};border-radius:0 12px 12px 0;font-size:1.1rem;font-style:italic;color:${c.textColor||'#94A3B8'};margin:0;font-family:Inter,sans-serif;line-height:1.75;box-shadow:inset 0 0 0 1px rgba(0,229,255,.06)">
+      ${c.text||'Quote text'}<cite style="display:block;font-size:13px;margin-top:14px;color:${c.accentColor||'#00E5FF'};font-style:normal;font-weight:600;letter-spacing:.02em">— ${c.author||'Author'}</cite>
     </blockquote>`;
-    case 'embed': return `<div style="border-radius:${c.borderRadius||'8px'};overflow:hidden;height:${c.height||'400px'};background:#e5e7eb;display:flex;align-items:center;justify-content:center;color:#9CA3AF">
-      ${c.url?`<iframe src="${c.url}" width="100%" height="100%" frameborder="0" allowfullscreen style="border:none"></iframe>`:`<span class="material-symbols-outlined" style="font-size:48px">embed_code</span>`}
+    case 'embed': return `<div style="border-radius:${c.borderRadius||'12px'};overflow:hidden;height:${c.height||'400px'};background:#060F1A;border:1px solid rgba(0,229,255,.1);display:flex;align-items:center;justify-content:center;color:#374151">
+      ${c.url?`<iframe src="${c.url}" width="100%" height="100%" frameborder="0" allowfullscreen style="border:none"></iframe>`:`<div style="text-align:center"><span class="material-symbols-outlined" style="font-size:40px;color:rgba(0,229,255,.3)">embed_code</span><p style="font-size:13px;margin-top:8px;font-family:Inter">Add URL in properties</p></div>`}
     </div>`;
-    case 'gallery': return `<div style="display:grid;grid-template-columns:repeat(${c.columns||3},1fr);gap:${c.gap||12}px">
-      ${(c.images||[]).map(img=>img.src?`<img src="${img.src}" alt="${img.alt||''}" style="width:100%;aspect-ratio:${c.aspectRatio||'16/9'};object-fit:cover;border-radius:8px" loading="lazy">`:`<div style="background:#e5e7eb;aspect-ratio:${c.aspectRatio||'16/9'};border-radius:8px;display:flex;align-items:center;justify-content:center;color:#9CA3AF"><span class="material-symbols-outlined">image</span></div>`).join('')}
+    case 'gallery': return `<div style="display:grid;grid-template-columns:repeat(${c.columns||3},1fr);gap:${c.gap||10}px">
+      ${(c.images||[]).map(img=>img.src?`<img src="${img.src}" alt="${img.alt||''}" style="width:100%;aspect-ratio:${c.aspectRatio||'16/9'};object-fit:cover;border-radius:8px;border:1px solid rgba(0,229,255,.08)" loading="lazy">`:`<div style="background:#060F1A;border:1px dashed rgba(0,229,255,.15);aspect-ratio:${c.aspectRatio||'16/9'};border-radius:8px;display:flex;align-items:center;justify-content:center"><span class="material-symbols-outlined" style="color:rgba(0,229,255,.3)">image</span></div>`).join('')}
     </div>`;
     case 'form': return `<div style="max-width:${c.maxWidth||'560px'};padding:${c.padding||'0'}">
-      ${c.title?`<h3 style="font-size:1.5rem;font-weight:700;color:#111827;margin-bottom:24px">${c.title}</h3>`:''}
+      ${c.title?`<h3 style="font-size:1.4rem;font-weight:800;color:#E8F4FD;margin:0 0 24px;letter-spacing:-.02em;font-family:Inter,sans-serif">${c.title}</h3>`:''}
       <form style="display:flex;flex-direction:column;gap:16px">
-        ${(c.fields||[]).map(f=>`<div><label style="display:block;font-size:14px;font-weight:500;color:#374151;margin-bottom:6px">${f.label||''}</label>
-          ${f.type==='textarea'?`<textarea rows="${f.rows||4}" placeholder="${f.placeholder||''}" style="width:100%;padding:12px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:15px;resize:vertical;box-sizing:border-box">${''}</textarea>`:`<input type="${f.type||'text'}" placeholder="${f.placeholder||''}" style="width:100%;padding:12px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:15px;box-sizing:border-box">`}
+        ${(c.fields||[]).map(f=>`<div><label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#374151;margin-bottom:7px;font-family:Inter">${f.label||''}</label>
+          ${f.type==='textarea'?`<textarea rows="${f.rows||4}" placeholder="${f.placeholder||''}" style="width:100%;padding:12px 14px;background:#060F1A;border:1px solid rgba(0,229,255,.1);border-radius:9px;font-size:14px;resize:vertical;box-sizing:border-box;color:#E8F4FD;font-family:Inter;outline:none"></textarea>`:`<input type="${f.type||'text'}" placeholder="${f.placeholder||''}" style="width:100%;padding:12px 14px;background:#060F1A;border:1px solid rgba(0,229,255,.1);border-radius:9px;font-size:14px;box-sizing:border-box;color:#E8F4FD;font-family:Inter;outline:none">`}
         </div>`).join('')}
-        ${c.submitButton?`<button type="submit" style="padding:12px 24px;background:${c.submitButton.backgroundColor||'#4F7CFF'};color:${c.submitButton.textColor||'#fff'};border:none;border-radius:8px;font-weight:600;font-size:15px;cursor:pointer${c.submitButton.fullWidth?';width:100%':''}">${c.submitButton.label||'Submit'}</button>`:''}
+        ${c.submitButton?`<button type="button" style="padding:13px 28px;background:${c.submitButton.backgroundColor||'linear-gradient(135deg,#00C4DD,#006FE8)'};color:${c.submitButton.textColor||'#fff'};border:none;border-radius:9px;font-weight:700;font-size:15px;cursor:pointer;font-family:Inter;${c.submitButton.fullWidth?'width:100%':''}box-shadow:0 0 20px rgba(0,229,255,.2)">${c.submitButton.label||'Submit'}</button>`:''}
       </form>
     </div>`;
-    case 'countdown': return `<section style="padding:${c.padding||'80px 40px'};background:${c.backgroundColor||'#0f172a'};text-align:center">
-      ${c.title?`<h2 style="font-size:2rem;font-weight:800;color:${c.textColor||'#fff'};margin-bottom:32px">${c.title}</h2>`:''}
-      <div style="display:flex;gap:20px;justify-content:center">
-        ${['Days','Hours','Minutes','Seconds'].map((u,i)=>`<div><span style="display:block;font-size:3rem;font-weight:800;color:${c.accentColor||'#4F7CFF'};line-height:1;min-width:80px">${['00','04','45','12'][i]}</span><span style="font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:${c.textColor||'#fff'};opacity:.6">${u}</span></div>`).join('')}
-      </div>
-    </section>`;
-    case 'team': return `<section style="padding:${c.padding||'80px 40px'};background:${c.backgroundColor||'#fff'}">
-      ${c.title?`<div style="text-align:center;margin-bottom:48px"><h2 style="font-size:2.5rem;font-weight:800;color:#111827">${c.title}</h2></div>`:''}
-      <div style="display:grid;grid-template-columns:repeat(${c.columns||4},1fr);gap:28px">
-        ${(c.members||[]).map(m=>`<div style="text-align:center">
-          ${(m.photo||m.image)?`<img src="${m.photo||m.image}" alt="${m.name||''}" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:12px;margin-bottom:16px">`:`<div style="background:#e5e7eb;aspect-ratio:1;border-radius:12px;margin-bottom:16px;display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:700;color:#9CA3AF">${(m.name||'?').charAt(0)}</div>`}
-          <div style="font-weight:700;font-size:17px;color:#111827">${m.name||''}</div>
-          <div style="font-size:14px;color:#6B7280;margin:4px 0 12px">${m.role||''}</div>
-          ${m.bio?`<p style="font-size:14px;line-height:1.6;color:#9CA3AF">${m.bio}</p>`:''}
+    case 'countdown': return `<section style="padding:${c.padding||'80px 40px'};background:${c.backgroundColor||'#030B14'};text-align:center;position:relative;overflow:hidden">
+      <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,rgba(0,229,255,.05),transparent 60%);pointer-events:none"></div>
+      ${c.title?`<h2 style="font-size:clamp(1.6rem,3vw,2.2rem);font-weight:900;color:${c.textColor||'#E8F4FD'};margin:0 0 40px;letter-spacing:-.025em;font-family:Inter,sans-serif;position:relative">${c.title}</h2>`:''}
+      <div style="display:flex;gap:16px;justify-content:center;position:relative">
+        ${['Days','Hours','Minutes','Seconds'].map((u,i)=>`<div style="background:#060F1A;border:1px solid rgba(0,229,255,.12);border-radius:14px;padding:24px 20px;min-width:90px">
+          <span style="display:block;font-size:clamp(2.5rem,5vw,3.5rem);font-weight:900;color:${c.accentColor||'#00E5FF'};line-height:1;letter-spacing:-.04em;font-family:Inter,sans-serif;text-shadow:0 0 24px rgba(0,229,255,.4)">${['00','04','45','12'][i]}</span>
+          <span style="font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:${c.textColor||'#374151'};margin-top:8px;display:block;font-family:JetBrains Mono">${u}</span>
         </div>`).join('')}
       </div>
     </section>`;
-    case 'timeline': return `<section style="padding:${c.padding||'80px 40px'};background:${c.backgroundColor||'#fff'}">
-      ${c.title?`<h2 style="font-size:2.5rem;font-weight:800;color:#111827;margin-bottom:48px">${c.title}</h2>`:''}
+    case 'team': return `<section style="padding:${c.padding||'80px 40px'};background:${c.backgroundColor||'#030B14'}">
+      ${c.title?`<div style="text-align:center;margin-bottom:52px"><h2 style="font-size:clamp(1.8rem,3vw,2.5rem);font-weight:900;color:#E8F4FD;margin:0;letter-spacing:-.025em;font-family:Inter,sans-serif">${c.title}</h2></div>`:''}
+      <div style="display:grid;grid-template-columns:repeat(${c.columns||4},1fr);gap:24px">
+        ${(c.members||[]).map(m=>`<div style="text-align:center;background:#060F1A;border:1px solid rgba(0,229,255,.08);border-radius:16px;padding:28px 20px;position:relative;overflow:hidden">
+          <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,229,255,.2),transparent)"></div>
+          ${(m.photo||m.image)?`<img src="${m.photo||m.image}" alt="${m.name||''}" style="width:80px;height:80px;object-fit:cover;border-radius:50%;margin:0 auto 16px;display:block;border:2px solid rgba(0,229,255,.2)">`:`<div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,rgba(0,196,221,.15),rgba(79,124,255,.15));border:2px solid rgba(0,229,255,.2);margin:0 auto 16px;display:flex;align-items:center;justify-content:center;font-size:1.8rem;font-weight:800;color:#00E5FF">${(m.name||'?').charAt(0)}</div>`}
+          <div style="font-weight:700;font-size:16px;color:#E8F4FD;font-family:Inter,sans-serif">${m.name||''}</div>
+          <div style="font-size:13px;color:#00E5FF;margin:4px 0 10px;font-family:JetBrains Mono;letter-spacing:.04em">${m.role||''}</div>
+          ${m.bio?`<p style="font-size:13px;line-height:1.6;color:#4B5563;margin:0;font-family:Inter">${m.bio}</p>`:''}
+        </div>`).join('')}
+      </div>
+    </section>`;
+    case 'timeline': return `<section style="padding:${c.padding||'80px 40px'};background:${c.backgroundColor||'#030B14'}">
+      ${c.title?`<h2 style="font-size:clamp(1.8rem,3vw,2.5rem);font-weight:900;color:#E8F4FD;margin:0 0 52px;letter-spacing:-.025em;font-family:Inter,sans-serif">${c.title}</h2>`:''}
       <div style="max-width:680px;margin:0 auto">
-        ${(c.items||[]).map((item,i)=>`<div style="display:flex;gap:24px;padding-bottom:40px">
-          <div style="width:42px;height:42px;border-radius:50%;background:${c.accentColor||'#4F7CFF'};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0">${i+1}</div>
-          <div>
-            ${item.date?`<div style="font-size:13px;color:${c.accentColor||'#4F7CFF'};margin-bottom:4px">${item.date}</div>`:''}
-            <div style="font-weight:700;font-size:17px;color:#111827;margin-bottom:6px">${item.title||''}</div>
-            <div style="font-size:15px;line-height:1.6;color:#6B7280">${item.text||item.description||''}</div>
+        ${(c.items||[]).map((item,i)=>`<div style="display:flex;gap:24px;padding-bottom:36px;position:relative">
+          ${i<(c.items||[]).length-1?`<div style="position:absolute;left:20px;top:42px;bottom:0;width:1px;background:linear-gradient(180deg,rgba(0,229,255,.3),transparent)"></div>`:''}
+          <div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#00C4DD,#006FE8);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0;font-size:15px;box-shadow:0 0 16px rgba(0,229,255,.3)">${i+1}</div>
+          <div style="padding-top:8px">
+            ${item.date?`<div style="font-size:11px;font-weight:700;color:${c.accentColor||'#00E5FF'};margin-bottom:5px;font-family:JetBrains Mono;letter-spacing:.06em;text-transform:uppercase">${item.date}</div>`:''}
+            <div style="font-weight:700;font-size:16px;color:#E8F4FD;margin-bottom:6px;font-family:Inter;letter-spacing:-.01em">${item.title||''}</div>
+            <div style="font-size:14px;line-height:1.7;color:#64748B;font-family:Inter">${item.text||item.description||''}</div>
           </div>
         </div>`).join('')}
       </div>
     </section>`;
-    case 'contact': return `<section style="padding:${c.padding||'80px 40px'};background:${c.backgroundColor||'#fff'}">
-      ${c.title?`<div style="text-align:${c.align||'center'};margin-bottom:48px"><h2 style="font-size:2.5rem;font-weight:800;color:#111827">${c.title}</h2></div>`:''}
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:32px">
-        ${(c.items||[]).map(item=>`<div style="display:flex;gap:14px;align-items:flex-start">
-          <div style="font-size:1.5rem">${item.icon||'📍'}</div>
-          <div><strong style="display:block;margin-bottom:4px;color:#111827">${item.label||''}</strong>${item.link?`<a href="${item.link}" style="font-size:15px;color:#6B7280;text-decoration:none">${item.value||''}</a>`:`<span style="font-size:15px;color:#6B7280">${item.value||''}</span>`}</div>
+    case 'contact': return `<section style="padding:${c.padding||'80px 40px'};background:${c.backgroundColor||'#030B14'}">
+      ${c.title?`<div style="text-align:${c.align||'center'};margin-bottom:52px"><h2 style="font-size:clamp(1.8rem,3vw,2.5rem);font-weight:900;color:#E8F4FD;margin:0;letter-spacing:-.025em;font-family:Inter,sans-serif">${c.title}</h2></div>`:''}
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:24px">
+        ${(c.items||[]).map(item=>`<div style="display:flex;gap:16px;align-items:flex-start;background:#060F1A;border:1px solid rgba(0,229,255,.08);border-radius:14px;padding:24px">
+          <div style="width:42px;height:42px;border-radius:11px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.2rem">${item.icon||'📍'}</div>
+          <div><strong style="display:block;margin-bottom:4px;color:#E8F4FD;font-size:14px;font-family:Inter;font-weight:600">${item.label||''}</strong>${item.link?`<a href="${item.link}" style="font-size:14px;color:#64748B;text-decoration:none;font-family:Inter">${item.value||''}</a>`:`<span style="font-size:14px;color:#64748B;font-family:Inter">${item.value||''}</span>`}</div>
         </div>`).join('')}
       </div>
     </section>`;
-    case 'cards_grid': return `<section style="padding:${c.padding||'80px 40px'};background:${c.backgroundColor||'#fff'}">
-      ${c.title?`<div style="margin-bottom:40px"><h2 style="font-size:2.5rem;font-weight:800;color:#111827">${c.title}</h2></div>`:''}
-      <div style="display:grid;grid-template-columns:repeat(${c.columns||3},1fr);gap:24px">
-        ${(c.cards||[]).map(card=>`<div style="background:${card.backgroundColor||'#fff'};border:${card.border||'1px solid #e5e7eb'};border-radius:12px;overflow:hidden">
+    case 'cards_grid': return `<section style="padding:${c.padding||'80px 40px'};background:${c.backgroundColor||'#030B14'}">
+      ${c.title?`<div style="margin-bottom:40px"><h2 style="font-size:clamp(1.8rem,3vw,2.5rem);font-weight:900;color:#E8F4FD;margin:0;letter-spacing:-.025em;font-family:Inter,sans-serif">${c.title}</h2></div>`:''}
+      <div style="display:grid;grid-template-columns:repeat(${c.columns||3},1fr);gap:20px">
+        ${(c.cards||[]).map(card=>`<div style="background:${card.backgroundColor||'#060F1A'};border:1px solid rgba(0,229,255,.08);border-radius:16px;overflow:hidden;position:relative">
           ${card.image?`<img src="${card.image}" alt="${card.imageAlt||''}" style="width:100%;aspect-ratio:16/9;object-fit:cover">`:``}
           <div style="padding:24px">
-            ${card.tag?`<span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;background:rgba(79,124,255,.1);color:#4F7CFF;border-radius:4px;padding:2px 8px;margin-bottom:12px;display:inline-block">${card.tag}</span>`:''}
-            <h3 style="font-size:18px;font-weight:700;margin-bottom:8px;color:#111827">${card.title||''}</h3>
-            <p style="font-size:14px;line-height:1.6;color:#6B7280;margin-bottom:20px">${card.text||''}</p>
-            ${(card.link||card.cta)?`<a href="${card.link||'#'}" style="display:inline-block;padding:8px 16px;background:#4F7CFF;color:#fff;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none">${card.cta||'Read more'}</a>`:''}
+            ${card.tag?`<span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;background:rgba(0,229,255,.08);color:#00E5FF;border-radius:6px;padding:3px 10px;margin-bottom:12px;display:inline-block;font-family:JetBrains Mono">${card.tag}</span>`:''}
+            <h3 style="font-size:17px;font-weight:700;margin:0 0 8px;color:#E8F4FD;font-family:Inter;letter-spacing:-.01em">${card.title||''}</h3>
+            <p style="font-size:14px;line-height:1.65;color:#64748B;margin:0 0 20px;font-family:Inter">${card.text||''}</p>
+            ${(card.link||card.cta)?`<a href="${card.link||'#'}" style="display:inline-block;padding:8px 18px;background:rgba(0,229,255,.08);color:#00E5FF;border:1px solid rgba(0,229,255,.2);border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;font-family:Inter">${card.cta||'Read more'}</a>`:''}
           </div>
         </div>`).join('')}
       </div>
     </section>`;
-    case 'banner': return `<div style="padding:14px 24px;background:${c.backgroundColor||'#4F7CFF'};color:${c.textColor||'#fff'};display:flex;align-items:center;justify-content:center;gap:12px;font-size:14px;font-weight:500">
-      ${c.icon?`<span>${c.icon}</span>`:''}
-      <span>${c.text||'Announcement text'}</span>
-      ${c.link?`<a href="${c.link}" style="color:${c.textColor||'#fff'};font-weight:700;text-decoration:underline;margin-left:8px">${c.linkLabel||'Learn more'}</a>`:''}
+    case 'banner': return `<div style="padding:13px 28px;background:${c.backgroundColor||'linear-gradient(90deg,rgba(0,196,221,.12),rgba(79,124,255,.1))'};border-bottom:1px solid rgba(0,229,255,.15);display:flex;align-items:center;justify-content:center;gap:12px;font-size:14px;font-weight:500;font-family:Inter,sans-serif;position:relative;overflow:hidden">
+      <div style="position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,229,255,.3),transparent)"></div>
+      ${c.icon?`<span style="font-size:16px">${c.icon}</span>`:'<span style="width:6px;height:6px;border-radius:50%;background:#00E5FF;box-shadow:0 0 6px #00E5FF;flex-shrink:0"></span>'}
+      <span style="color:${c.textColor||'#E8F4FD'}">${c.text||'Announcement text'}</span>
+      ${c.link?`<a href="${c.link}" style="color:#00E5FF;font-weight:700;text-decoration:none;padding:4px 12px;border:1px solid rgba(0,229,255,.3);border-radius:6px;font-size:12px;margin-left:4px">${c.linkLabel||'Learn more'}</a>`:''}
     </div>`;
-    case 'logo_strip': return `<section style="padding:${c.padding||'48px 40px'};background:${c.backgroundColor||'#fff'}">
-      ${c.label?`<p style="text-align:center;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:#9CA3AF;margin-bottom:32px">${c.label}</p>`:''}
-      <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:40px;opacity:.6">
-        ${(c.logos||[]).map(l=>{const inner=l.src?`<img src="${l.src}" alt="${l.alt||l.name||''}" style="height:32px;width:auto;object-fit:contain;filter:grayscale(1)">`:`<span style="font-size:18px;font-weight:700;color:#9CA3AF">${l.name||''}</span>`;return l.url?`<a href="${l.url}" target="_blank" style="display:inline-flex;align-items:center">${inner}</a>`:inner;}).join('')}
+    case 'logo_strip': return `<section style="padding:${c.padding||'48px 40px'};background:${c.backgroundColor||'#030B14'};border-top:1px solid rgba(0,229,255,.06);border-bottom:1px solid rgba(0,229,255,.06)">
+      ${c.label?`<p style="text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#374151;margin:0 0 32px;font-family:JetBrains Mono">${c.label}</p>`:''}
+      <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:48px">
+        ${(c.logos||[]).map(l=>{const inner=l.src?`<img src="${l.src}" alt="${l.alt||l.name||''}" style="height:28px;width:auto;object-fit:contain;filter:grayscale(1) brightness(1.5);opacity:.5">`:`<span style="font-size:18px;font-weight:700;color:#374151;font-family:Inter,sans-serif;letter-spacing:-.01em">${l.name||''}</span>`;return l.url?`<a href="${l.url}" target="_blank" style="display:inline-flex;align-items:center">${inner}</a>`:inner;}).join('')}
       </div>
     </section>`;
-    case 'social_links': return `<div style="display:flex;gap:${c.gap||'12px'};justify-content:${c.align||'flex-start'};padding:8px 0">
-      ${(c.links||[]).map(l=>`<a href="${l.url||'#'}" style="width:${c.size||'40px'};height:${c.size||'40px'};border-radius:8px;background:${l.backgroundColor||'rgba(0,0,0,.08)'};color:${l.color||'#111'};display:flex;align-items:center;justify-content:center;text-decoration:none;font-size:18px">${l.icon||'🔗'}</a>`).join('')}
+    case 'social_links': return `<div style="display:flex;gap:${c.gap||'10px'};justify-content:${c.align||'flex-start'};padding:8px 0;flex-wrap:wrap">
+      ${(c.links||[]).map(l=>`<a href="${l.url||'#'}" style="width:${c.size||'42px'};height:${c.size||'42px'};border-radius:10px;background:${l.backgroundColor||'rgba(0,229,255,.08)'};color:${l.color||'#00E5FF'};border:1px solid rgba(0,229,255,.15);display:flex;align-items:center;justify-content:center;text-decoration:none;font-size:18px;transition:all .15s">${l.icon||'🔗'}</a>`).join('')}
     </div>`;
     case 'icon': return `<div style="text-align:${c.align||'left'};padding:${c.padding||'8px 0'}">
-      <span style="width:${c.size||'48px'};height:${c.size||'48px'};background:${c.backgroundColor||''};border-radius:${c.borderRadius||'12px'};color:${c.color||'#4F7CFF'};display:inline-flex;align-items:center;justify-content:center;font-size:calc(${c.size||'48px'} * .55)">${c.icon||'⚡'}</span>
-      ${c.text?`<div style="font-size:14px;margin-top:8px;color:${c.textColor||'#374151'}">${c.text}</div>`:''}
+      <span style="width:${c.size||'52px'};height:${c.size||'52px'};background:${c.backgroundColor||'rgba(0,229,255,.08)'};border:1px solid rgba(0,229,255,.15);border-radius:${c.borderRadius||'14px'};color:${c.color||'#00E5FF'};display:inline-flex;align-items:center;justify-content:center;font-size:calc(${c.size||'52px'} * .48)">${c.icon||'⚡'}</span>
+      ${c.text?`<div style="font-size:14px;margin-top:10px;color:${c.textColor||'#94A3B8'};font-family:Inter,sans-serif">${c.text}</div>`:''}
     </div>`;
-    case 'badge': return `<span style="display:inline-block;padding:${c.padding||'4px 12px'};background:${c.backgroundColor||'rgba(79,124,255,.1)'};color:${c.textColor||'#4F7CFF'};border-radius:${c.borderRadius||'6px'};font-size:${c.fontSize||'13px'};font-weight:600;${c.border?'border:1px solid '+c.border:''}">${c.text||'Badge'}</span>`;
-    case 'link': return `<a href="${c.href||'#'}" target="${c.target||'_self'}" style="color:${c.color||'#4F7CFF'};text-decoration:${c.underline!==false?'underline':'none'};font-size:${c.fontSize||'16px'};font-weight:${c.fontWeight||'400'}">${c.label||'Link'}</a>`;
-    case 'code_block': return `<div style="background:${c.backgroundColor||'#0f172a'};border-radius:10px;padding:24px;position:relative;overflow-x:auto">
-      ${c.language?`<span style="position:absolute;top:10px;right:14px;font-size:11px;font-weight:600;text-transform:uppercase;color:rgba(255,255,255,.4);font-family:JetBrains Mono">${c.language}</span>`:''}
-      <pre style="font-family:JetBrains Mono,monospace;font-size:14px;line-height:1.6;color:${c.textColor||'#e5e7eb'};white-space:pre-wrap;margin:0">${escH(c.code||'// code here')}</pre>
+    case 'badge': return `<span style="display:inline-flex;align-items:center;gap:5px;padding:${c.padding||'4px 12px'};background:${c.backgroundColor||'rgba(0,229,255,.08)'};color:${c.textColor||'#00E5FF'};border-radius:${c.borderRadius||'6px'};font-size:${c.fontSize||'12px'};font-weight:700;letter-spacing:.04em;font-family:JetBrains Mono;${c.border?'border:1px solid '+c.border:'border:1px solid rgba(0,229,255,.2)'}">${c.text||'Badge'}</span>`;
+    case 'link': return `<a href="${c.href||'#'}" target="${c.target||'_self'}" style="color:${c.color||'#00E5FF'};text-decoration:${c.underline!==false?'underline':'none'};font-size:${c.fontSize||'16px'};font-weight:${c.fontWeight||'500'};font-family:Inter,sans-serif">${c.label||'Link'}</a>`;
+    case 'code_block': return `<div style="background:${c.backgroundColor||'#030B14'};border-radius:12px;border:1px solid rgba(0,229,255,.1);overflow:hidden">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid rgba(0,229,255,.08);background:rgba(0,229,255,.03)">
+        <div style="display:flex;gap:6px"><span style="width:10px;height:10px;border-radius:50%;background:#EF4444"></span><span style="width:10px;height:10px;border-radius:50%;background:#F59E0B"></span><span style="width:10px;height:10px;border-radius:50%;background:#22C55E"></span></div>
+        ${c.language?`<span style="font-size:11px;font-weight:600;text-transform:uppercase;color:rgba(0,229,255,.4);font-family:JetBrains Mono;letter-spacing:.06em">${c.language}</span>`:''}
+      </div>
+      <div style="padding:20px 24px;overflow-x:auto"><pre style="font-family:JetBrains Mono,monospace;font-size:13px;line-height:1.7;color:${c.textColor||'#94A3B8'};white-space:pre-wrap;margin:0">${escH(c.code||'// your code here')}</pre></div>
     </div>`;
     case 'tabs': {
       const tabs = c.tabs||[];
-      if(!tabs.length) return '<div style="padding:20px;color:#9CA3AF;text-align:center">Add tabs in properties</div>';
-      return `<div style="padding:${c.padding||'0'}">
-        <div style="display:flex;border-bottom:2px solid rgba(0,0,0,.1);gap:4px">
-          ${tabs.map((t,i)=>`<button onclick="this.closest('[data-tabs]').querySelectorAll('[data-panel]').forEach((p,j)=>{p.style.display=j===${i}?'block':'none'});this.closest('[data-tabs]').querySelectorAll('[data-tbtn]').forEach((b,j)=>{b.style.borderBottom=j===${i}?'2px solid #4F7CFF':'2px solid transparent';b.style.color=j===${i}?'#4F7CFF':'#94A3B8'})" data-tbtn
-            style="padding:12px 20px;font-size:15px;font-weight:500;border:none;background:none;cursor:pointer;border-bottom:${i===0?'2px solid #4F7CFF':'2px solid transparent'};color:${i===0?'#4F7CFF':'#94A3B8'};margin-bottom:-2px">${t.label||'Tab '+(i+1)}</button>`).join('')}
+      if(!tabs.length) return '<div style="padding:32px;color:#4F7CFF;text-align:center;background:#060F1A;border:1px solid rgba(0,229,255,.08);border-radius:12px;font-size:13px;font-family:JetBrains Mono">Add tabs in properties →</div>';
+      return `<div style="background:${c.backgroundColor||'#030B14'};border-radius:12px;border:1px solid rgba(0,229,255,.1);overflow:hidden;padding:${c.padding||'0'}">
+        <div style="display:flex;border-bottom:1px solid rgba(0,229,255,.1);gap:2px;padding:4px 4px 0;background:rgba(0,229,255,.02)">
+          ${tabs.map((t,i)=>`<button onclick="this.closest('[data-tabs]').querySelectorAll('[data-panel]').forEach((p,j)=>{p.style.display=j===${i}?'block':'none'});this.closest('[data-tabs]').querySelectorAll('[data-tbtn]').forEach((b,j)=>{b.style.borderBottom=j===${i}?'2px solid #00E5FF':'2px solid transparent';b.style.color=j===${i}?'#00E5FF':'#4B5563';b.style.background=j===${i}?'rgba(0,229,255,.06)':'transparent'})" data-tbtn
+            style="padding:10px 20px;font-size:13px;font-weight:600;border:none;background:${i===0?'rgba(0,229,255,.06)':'transparent'};cursor:pointer;border-bottom:${i===0?'2px solid #00E5FF':'2px solid transparent'};color:${i===0?'#00E5FF':'#4B5563'};margin-bottom:-1px;border-radius:8px 8px 0 0;font-family:Inter;transition:all .15s">${t.label||'Tab '+(i+1)}</button>`).join('')}
         </div>
-        <div data-tabs style="padding-top:24px">
+        <div data-tabs style="padding:24px">
           ${tabs.map((t,i)=>`<div data-panel style="display:${i===0?'block':'none'}">${
             t.content
-              ? `<div style="line-height:1.6">${t.content}</div>`
-              : ((t.children||[]).map(getCompHTML).join('') || '<p style="color:#9CA3AF;padding:16px">No content in this tab</p>')
+              ? `<div style="line-height:1.7;color:#94A3B8;font-size:15px">${t.content}</div>`
+              : ((t.children||[]).map(getCompHTML).join('') || '<p style="color:#4B5563;font-size:13px;font-family:JetBrains Mono">No content in this tab</p>')
           }</div>`).join('')}
         </div>
       </div>`;
@@ -526,14 +638,32 @@ function getCompHTML(c) {
       const cols = c.columns||[];
       const tpl = c.gridTemplate || cols.map(()=>'1fr').join(' ');
       return `<div style="display:grid;grid-template-columns:${tpl};gap:${c.gap||'24px'};padding:${c.padding||'0'}">
-        ${cols.map(col=>`<div style="${Object.entries(col).filter(([k])=>!['children','type','id'].includes(k)).map(([k,v])=>k+':'+v).join(';')}">${(col.children||[]).map(getCompHTML).join('')}</div>`).join('')}
+        ${cols.map((col,ci)=>`<div style="min-height:80px;border:1px dashed rgba(0,229,255,.12);border-radius:8px;padding:12px;background:rgba(0,229,255,.015);${Object.entries(col).filter(([k])=>!['children','type','id'].includes(k)).map(([k,v])=>k+':'+v).join(';')}">${(col.children||[]).map(getCompHTML).join('') || `<div style="height:100%;display:flex;align-items:center;justify-content:center;color:rgba(0,229,255,.2);font-size:11px;font-family:JetBrains Mono">col ${ci+1}</div>`}</div>`).join('')}
       </div>`;
     }
-    case 'video': return `<div style="border-radius:${c.borderRadius||'8px'};overflow:hidden;height:${c.height||'400px'};background:${c.backgroundColor||'#0f172a'}">
-      ${c.src?`<video src="${c.src}" ${c.poster?`poster="${c.poster}"`:''}${c.autoplay?' autoplay muted loop':''}${c.controls!==false?' controls':''} style="width:100%;height:100%;object-fit:cover"></video>`:`<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#9CA3AF"><span class="material-symbols-outlined" style="font-size:48px">play_circle</span></div>`}
+    case 'video': return `<div style="border-radius:${c.borderRadius||'12px'};overflow:hidden;height:${c.height||'400px'};background:${c.backgroundColor||'#030B14'};border:1px solid rgba(0,229,255,.1);position:relative">
+      ${c.src
+        ?`<video src="${c.src}" ${c.poster?`poster="${c.poster}"`:''}${c.autoplay?' autoplay muted loop':''}${c.controls!==false?' controls':''} style="width:100%;height:100%;object-fit:cover"></video>`
+        :`<div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px">
+            <div style="width:64px;height:64px;border-radius:50%;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.2);display:flex;align-items:center;justify-content:center">
+              <span class="material-symbols-outlined" style="font-size:32px;color:#4F7CFF;font-variation-settings:'FILL' 1">play_circle</span>
+            </div>
+            <span style="font-size:12px;color:rgba(0,229,255,.3);font-family:JetBrains Mono">Add video URL in properties</span>
+          </div>`
+      }
     </div>`;
-    default: return `<div style="padding:20px;border:1px dashed #e5e7eb;border-radius:8px;text-align:center;color:#9CA3AF;font-size:14px">
-      ${c.type||'unknown'} component
+    case 'card': return `<div style="background:${c.backgroundColor||'#060F1A'};border:${c.border||'1px solid rgba(0,229,255,.1)'};border-radius:${c.borderRadius||'16px'};overflow:hidden;position:relative;max-width:${c.maxWidth||'400px'}">
+      <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,229,255,.25),transparent)"></div>
+      ${c.image?`<img src="${c.image}" alt="${c.imageAlt||''}" style="width:100%;aspect-ratio:16/9;object-fit:cover">`:``}
+      <div style="padding:${c.padding||'24px'}">
+        ${c.tag?`<span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;background:rgba(0,229,255,.08);color:#00E5FF;border-radius:6px;padding:3px 10px;margin-bottom:12px;display:inline-block;font-family:JetBrains Mono">${c.tag}</span>`:''}
+        <h3 style="font-size:18px;font-weight:800;margin:${c.tag?'8px':'0'} 0 8px;color:${c.titleColor||'#E8F4FD'};font-family:Inter,sans-serif;letter-spacing:-.01em">${c.title||'Card Title'}</h3>
+        ${c.text?`<p style="font-size:14px;line-height:1.7;color:${c.textColor||'#64748B'};margin:0 0 ${c.cta?'18px':'0'};font-family:Inter,sans-serif">${c.text}</p>`:''}
+        ${c.cta?`<a href="${c.ctaHref||'#'}" style="display:inline-block;padding:9px 18px;background:rgba(0,229,255,.08);color:#00E5FF;border:1px solid rgba(0,229,255,.2);border-radius:8px;font-size:13px;font-weight:700;text-decoration:none;font-family:Inter,sans-serif">${c.cta}</a>`:''}
+      </div>
+    </div>`;
+    default: return `<div style="padding:28px;border:1px dashed rgba(0,229,255,.2);border-radius:10px;text-align:center;background:rgba(0,229,255,.015)">
+      <span style="display:block;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(0,229,255,.4);font-family:JetBrains Mono">${c.type||'unknown'}</span>
     </div>`;
   }
 }
@@ -574,6 +704,15 @@ async function addComponent(type) {
   renderCanvas();
   renderPropertiesPanel(defaults);
 
+  // Flash the newly added component with a neon drop-in animation
+  requestAnimationFrame(() => {
+    const el = document.getElementById(`comp-${defaults.id}`);
+    if (el) {
+      el.classList.add('iwb-comp-added');
+      setTimeout(() => el.classList.remove('iwb-comp-added'), 800);
+    }
+  });
+
   try {
     await editorAPI.upsertComponent(editorProject.id, defaults);
   } catch {
@@ -587,7 +726,7 @@ async function removeComp(id) {
   selectedId = null;
   markDirty();
   renderCanvas();
-  document.getElementById('properties-panel').innerHTML = `<div class="text-center text-on-surface-variant text-sm mt-8 flex flex-col items-center gap-3"><span class="material-symbols-outlined text-[40px] opacity-30">touch_app</span><span>Select a component<br/>to edit its properties</span></div>`;
+  document.getElementById('properties-panel').innerHTML = `<div style="text-align:center;color:#374151;font-size:13px;margin-top:32px;display:flex;flex-direction:column;align-items:center;gap:12px"><div style="width:48px;height:48px;border-radius:12px;background:rgba(0,229,255,.04);border:1px solid rgba(0,229,255,.08);display:flex;align-items:center;justify-content:center"><span class="material-symbols-outlined" style="font-size:24px;color:rgba(0,229,255,.25)">touch_app</span></div><span style="line-height:1.6">Select a component<br/>to edit its properties</span></div>`;
 
   try {
     await editorAPI.deleteComponent(editorProject.id, id);
@@ -717,12 +856,44 @@ function markDirty() {
   if(txt){txt.textContent='Unsaved';txt.style.color='#F59E0B';}
 }
 
-// ── Undo ──────────────────────────────────────────────────────
-function pushUndo() { undoStack.push(JSON.stringify(editorLayout)); if(undoStack.length>30) undoStack.shift(); }
+// ── Undo / Redo ───────────────────────────────────────────────
+function pushUndo() {
+  undoStack.push(JSON.stringify(editorLayout));
+  if (undoStack.length > 50) undoStack.shift();
+  redoStack = [];
+  _syncUndoRedoBtns();
+}
+
 function editorUndo() {
-  if(!undoStack.length) return;
+  if (!undoStack.length) return;
+  redoStack.push(JSON.stringify(editorLayout));
   editorLayout = JSON.parse(undoStack.pop());
-  markDirty(); renderCanvas();
+  markDirty(); renderCanvas(); _syncUndoRedoBtns();
+}
+
+function editorRedo() {
+  if (!redoStack.length) return;
+  undoStack.push(JSON.stringify(editorLayout));
+  editorLayout = JSON.parse(redoStack.pop());
+  markDirty(); renderCanvas(); _syncUndoRedoBtns();
+}
+
+function _syncUndoRedoBtns() {
+  const u = document.getElementById('undo-btn');
+  const r = document.getElementById('redo-btn');
+  if (!u || !r) return;
+  const canUndo = undoStack.length > 0;
+  const canRedo = redoStack.length > 0;
+  u.disabled = !canUndo;
+  u.style.color = canUndo ? '#64748B' : '#2D3F52';
+  u.style.cursor = canUndo ? 'pointer' : 'not-allowed';
+  u.onmouseover = canUndo ? ()=>{ u.style.background='rgba(255,255,255,.05)'; u.style.color='#E8F4FD'; } : null;
+  u.onmouseout  = canUndo ? ()=>{ u.style.background='none'; u.style.color='#64748B'; } : null;
+  r.disabled = !canRedo;
+  r.style.color = canRedo ? '#64748B' : '#2D3F52';
+  r.style.cursor = canRedo ? 'pointer' : 'not-allowed';
+  r.onmouseover = canRedo ? ()=>{ r.style.background='rgba(255,255,255,.05)'; r.style.color='#E8F4FD'; } : null;
+  r.onmouseout  = canRedo ? ()=>{ r.style.background='none'; r.style.color='#64748B'; } : null;
 }
 
 // ── Device ────────────────────────────────────────────────────
@@ -730,10 +901,15 @@ const deviceWidths = {desktop:'1200px',tablet:'768px',mobile:'375px'};
 function setDevice(d) {
   const frame = document.getElementById('canvas-frame');
   if(frame) frame.style.width=deviceWidths[d]||'1200px';
+  const wLabel = document.getElementById('device-width-label');
+  if(wLabel) wLabel.textContent = deviceWidths[d]||'1200px';
   ['desktop','tablet','mobile'].forEach(k=>{
     const btn = document.getElementById('dev-'+k);
-    if(btn) btn.className = `w-8 h-8 flex items-center justify-center rounded-DEFAULT transition-colors ${k===d?'bg-surface-variant text-primary shadow-sm':'text-on-surface-variant hover:text-on-surface'}`;
+    if(!btn) return;
+    btn.style.background = k===d ? 'rgba(0,229,255,.12)' : 'transparent';
+    btn.style.color      = k===d ? '#00E5FF' : '#4B5563';
   });
+  fitCanvas();
 }
 
 // ── Layers ────────────────────────────────────────────────────
@@ -743,19 +919,21 @@ function updateLayers() {
   const comps = editorLayout.components||[];
   panel.innerHTML = comps.length===0
     ? '<p style="color:#4B5563;font-size:12px;padding:12px">No components yet</p>'
-    : comps.map(c=>`<div onclick="selectComp('${c.id}')" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:6px;cursor:pointer;background:${c.id===selectedId?'rgba(79,124,255,.1)':'transparent'};${c.id===selectedId?'border-left:2px solid #4F7CFF;':''}" class="hover:bg-slate-800/50 transition-colors">
-      <span class="material-symbols-outlined" style="font-size:14px;color:${c.id===selectedId?'#4F7CFF':'#94A3B8'}">${getCompIcon(c.type)}</span>
-      <span style="font-size:11px;color:${c.id===selectedId?'#E5E7EB':'#94A3B8'}">${c.type}</span>
-      <span style="font-size:10px;color:#4B5563;margin-left:auto;font-family:monospace">${c.id?.split('-').pop()||''}</span>
+    : comps.map(c=>`<div onclick="selectComp('${c.id}')" style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;cursor:pointer;background:${c.id===selectedId?'rgba(0,229,255,.08)':'transparent'};border:1px solid ${c.id===selectedId?'rgba(0,229,255,.15)':'transparent'};transition:all .12s" onmouseover="if(this.style.borderColor!=='rgba(0,229,255,.15)'){this.style.background='rgba(255,255,255,.03)'}" onmouseout="if(this.style.borderColor!=='rgba(0,229,255,.15)'){this.style.background='transparent'}">
+      <span class="material-symbols-outlined" style="font-size:14px;color:${c.id===selectedId?'#00E5FF':'#4B5563'}">${getCompIcon(c.type)}</span>
+      <span style="font-size:12px;font-family:Inter;color:${c.id===selectedId?'#E8F4FD':'#64748B'}">${c.type}</span>
+      <span style="font-size:10px;color:#374151;margin-left:auto;font-family:JetBrains Mono">${c.id?.split('-').pop()||''}</span>
     </div>`).join('');
 }
 
 function switchLibTab(tab) {
   const isComp = tab==='comp';
-  document.getElementById('tab-comp').className = `flex-1 py-1 text-[10px] rounded font-semibold ${isComp?'bg-primary/10 text-primary border border-primary/20':'text-slate-500 hover:text-slate-300 border border-transparent hover:border-slate-700'} transition-all`;
-  document.getElementById('tab-layers').className = `flex-1 py-1 text-[10px] rounded font-semibold ${!isComp?'bg-primary/10 text-primary border border-primary/20':'text-slate-500 hover:text-slate-300 border border-transparent hover:border-slate-700'} transition-all`;
-  document.getElementById('lib-components').style.display = isComp?'flex':'none';
-  document.getElementById('lib-layers').style.display = !isComp?'flex':'none';
+  const activeStyle  = 'flex:1;padding:6px;font-size:11px;font-weight:600;border-radius:6px;border:1px solid rgba(0,229,255,.2);background:rgba(0,229,255,.1);color:#00E5FF;cursor:pointer;font-family:Inter;transition:all .15s';
+  const inactiveStyle = 'flex:1;padding:6px;font-size:11px;font-weight:600;border-radius:6px;border:none;background:transparent;color:#374151;cursor:pointer;font-family:Inter;transition:all .15s';
+  document.getElementById('tab-comp').style.cssText    = isComp  ? activeStyle : inactiveStyle;
+  document.getElementById('tab-layers').style.cssText  = !isComp ? activeStyle : inactiveStyle;
+  document.getElementById('lib-components').style.display = isComp?'block':'none';
+  document.getElementById('lib-layers').style.display = !isComp?'block':'none';
   if(!isComp) updateLayers();
 }
 
@@ -771,11 +949,95 @@ function toggleCanvasGrid() {
 
 // ── Drag from library ─────────────────────────────────────────
 let dragType = null;
-function dragCompStart(e, type) { dragType=type; e.dataTransfer.effectAllowed='copy'; }
-document.addEventListener('dragover', e=>{ if(dragType) e.preventDefault(); });
-document.addEventListener('dragend', ()=>{ dragType=null; });
-document.addEventListener('drop', e=>{
-  if(dragType && document.getElementById('canvas-frame')?.contains(e.target)) {
+let _dropIndicator = null;
+
+function dragCompStart(e, type) {
+  dragType = type;
+  e.dataTransfer.effectAllowed = 'copy';
+
+  // Cyber-styled ghost image
+  const ghost = document.createElement('div');
+  ghost.style.cssText = 'position:fixed;top:-999px;left:0;display:flex;align-items:center;gap:8px;padding:8px 16px;background:#030B14;border:1px solid rgba(0,229,255,.7);border-radius:10px;color:#00E5FF;font-size:12px;font-weight:700;font-family:Inter,sans-serif;box-shadow:0 0 20px rgba(0,229,255,.4),0 4px 20px rgba(0,0,0,.6);white-space:nowrap;letter-spacing:.03em';
+  ghost.innerHTML = `<span style="font-size:16px;line-height:1;opacity:.7">+</span><span style="text-transform:capitalize">${type.replace(/_/g,' ')}</span>`;
+  document.body.appendChild(ghost);
+  e.dataTransfer.setDragImage(ghost, -14, ghost.offsetHeight / 2);
+  requestAnimationFrame(() => ghost.remove());
+}
+
+function _getCanvasFrame() { return document.getElementById('canvas-frame'); }
+
+function _setCanvasDropActive(active) {
+  const frame = _getCanvasFrame();
+  if (!frame) return;
+  if (active) {
+    frame.style.boxShadow = '0 0 0 2px rgba(0,229,255,.7),0 0 60px rgba(0,229,255,.12),0 24px 80px rgba(0,0,0,.7)';
+    frame.style.outline = '2px dashed rgba(0,229,255,.3)';
+    frame.style.outlineOffset = '6px';
+  } else {
+    frame.style.boxShadow = '0 0 0 1px rgba(0,229,255,.15),0 24px 80px rgba(0,0,0,.7),0 4px 16px rgba(0,0,0,.4)';
+    frame.style.outline = 'none';
+    frame.style.outlineOffset = '0';
+  }
+}
+
+function _showDropIndicator(e) {
+  const frame = _getCanvasFrame();
+  if (!frame) return;
+  if (!_dropIndicator) {
+    _dropIndicator = document.createElement('div');
+    _dropIndicator.style.cssText = 'position:absolute;left:8px;right:8px;height:3px;background:linear-gradient(90deg,transparent,#00E5FF 15%,#00E5FF 85%,transparent);box-shadow:0 0 12px rgba(0,229,255,.9),0 0 30px rgba(0,229,255,.5);pointer-events:none;z-index:1000;border-radius:2px;transition:top .07s ease';
+    frame.appendChild(_dropIndicator);
+  }
+  const frameRect = frame.getBoundingClientRect();
+  const mouseY = e.clientY - frameRect.top;
+  const comps = document.getElementById('canvas-components');
+  const children = comps ? Array.from(comps.children) : [];
+  let insertY = 38;
+  for (const child of children) {
+    const rect = child.getBoundingClientRect();
+    const midY = rect.top - frameRect.top + rect.height / 2;
+    if (mouseY < midY) { insertY = rect.top - frameRect.top; break; }
+    insertY = rect.bottom - frameRect.top;
+  }
+  _dropIndicator.style.top = Math.max(0, insertY - 1) + 'px';
+}
+
+function _hideDropIndicator() {
+  if (_dropIndicator) { _dropIndicator.remove(); _dropIndicator = null; }
+}
+
+document.addEventListener('dragover', e => {
+  if (!dragType) return;
+  e.preventDefault();
+  const frame = _getCanvasFrame();
+  if (frame?.contains(e.target)) {
+    _setCanvasDropActive(true);
+    _showDropIndicator(e);
+  } else {
+    _setCanvasDropActive(false);
+    _hideDropIndicator();
+  }
+});
+
+document.addEventListener('dragleave', e => {
+  if (!dragType) return;
+  const frame = _getCanvasFrame();
+  if (frame && !frame.contains(e.relatedTarget)) {
+    _setCanvasDropActive(false);
+    _hideDropIndicator();
+  }
+});
+
+document.addEventListener('dragend', () => {
+  dragType = null;
+  _setCanvasDropActive(false);
+  _hideDropIndicator();
+});
+
+document.addEventListener('drop', e => {
+  _setCanvasDropActive(false);
+  _hideDropIndicator();
+  if (dragType && _getCanvasFrame()?.contains(e.target)) {
     addComponent(dragType);
   }
   dragType=null;
@@ -784,7 +1046,8 @@ document.addEventListener('drop', e=>{
 // ── Keyboard shortcuts ────────────────────────────────────────
 function handleEditorKey(e) {
   if((e.ctrlKey||e.metaKey)&&e.key==='s') { e.preventDefault(); saveLayout(); }
-  if((e.ctrlKey||e.metaKey)&&e.key==='z') { e.preventDefault(); editorUndo(); }
+  if((e.ctrlKey||e.metaKey)&&e.key==='z'&&!e.shiftKey) { e.preventDefault(); editorUndo(); }
+  if((e.ctrlKey||e.metaKey)&&(e.key==='y'||(e.key==='z'&&e.shiftKey))) { e.preventDefault(); editorRedo(); }
   if(e.key==='Escape') { selectedId=null; renderCanvas(); }
   if((e.key==='Delete'||e.key==='Backspace')&&selectedId&&!['INPUT','TEXTAREA'].includes(document.activeElement.tagName)&&!document.activeElement.isContentEditable) {
     removeComp(selectedId);
@@ -830,21 +1093,26 @@ function renderPropertiesPanel(c) {
   const panel = document.getElementById('properties-panel');
   if(!panel) return;
 
+  const _iSt = 'width:100%;background:#030B14;border:1px solid rgba(0,229,255,.1);color:#E8F4FD;border-radius:8px;padding:8px 10px;font-size:13px;font-family:Inter;outline:none;box-sizing:border-box;transition:border-color .15s';
+  const _iSt2 = _iSt + ';resize:vertical';
+
   const field = (label,key,type='text',placeholder='')=>`
-    <div class="flex flex-col gap-xs">
-      <label class="font-label-caps text-label-caps text-on-surface-variant">${label}</label>
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <label style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#374151;font-family:Inter">${label}</label>
       <input type="${type}" value="${escA(c[key]||'')}" placeholder="${placeholder}"
         onchange="updateCompProp('${c.id}','${key}',this.value)"
-        class="bg-[#080E1A] border border-outline-variant rounded-lg px-md py-[8px] font-body-sm text-body-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"/>
+        onfocus="this.style.borderColor='#00E5FF'" onblur="this.style.borderColor='rgba(0,229,255,.1)'"
+        style="${_iSt}"/>
     </div>`;
 
   const colorField = (label,key)=>`
-    <div class="flex items-center gap-sm justify-between">
-      <label class="font-label-caps text-label-caps text-on-surface-variant">${label}</label>
-      <div class="flex items-center gap-1">
-        <input type="color" value="${c[key]||'#ffffff'}" onchange="updateCompProp('${c.id}','${key}',this.value)" class="w-8 h-8 rounded border border-outline-variant cursor-pointer bg-transparent"/>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+      <label style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#374151;font-family:Inter;white-space:nowrap">${label}</label>
+      <div style="display:flex;align-items:center;gap:4px">
+        <input type="color" value="${c[key]||'#ffffff'}" onchange="updateCompProp('${c.id}','${key}',this.value)" style="width:28px;height:28px;border:1px solid rgba(0,229,255,.12);border-radius:6px;cursor:pointer;background:transparent;padding:2px"/>
         <input type="text" value="${escA(c[key]||'')}" onchange="updateCompProp('${c.id}','${key}',this.value)"
-          class="bg-[#080E1A] border border-outline-variant rounded px-2 py-1 font-code-sm text-code-sm text-on-surface w-24 focus:border-primary outline-none"/>
+          onfocus="this.style.borderColor='#00E5FF'" onblur="this.style.borderColor='rgba(0,229,255,.1)'"
+          style="background:#030B14;border:1px solid rgba(0,229,255,.1);color:#E8F4FD;border-radius:6px;padding:5px 7px;font-size:12px;font-family:JetBrains Mono;width:84px;outline:none;transition:border-color .15s"/>
       </div>
     </div>`;
 
@@ -853,33 +1121,47 @@ function renderPropertiesPanel(c) {
     const isJSON = val !== null && typeof val === 'object';
     const display = isJSON ? JSON.stringify(val, null, 2) : (val||'');
     const handler = isJSON ? `updateCompPropJSON('${c.id}','${key}',this.value)` : `updateCompProp('${c.id}','${key}',this.value)`;
-    return `<div class="flex flex-col gap-xs">
-      <label class="font-label-caps text-label-caps text-on-surface-variant">${label}${isJSON?' <span style="opacity:.5;font-size:9px">(JSON)</span>':''}</label>
+    return `<div style="display:flex;flex-direction:column;gap:4px">
+      <label style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#374151;font-family:Inter">${label}${isJSON?' <span style="opacity:.4;font-size:9px">(JSON)</span>':''}</label>
       <textarea rows="${rows}" onchange="${handler}"
-        class="bg-[#080E1A] border border-outline-variant rounded-lg px-md py-[8px] font-code-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all resize-y">${escA(String(display))}</textarea>
+        onfocus="this.style.borderColor='#00E5FF'" onblur="this.style.borderColor='rgba(0,229,255,.1)'"
+        style="${_iSt2};font-family:${isJSON?'JetBrains Mono,monospace':'Inter'};font-size:12px">${escA(String(display))}</textarea>
     </div>`;
   };
 
   const select = (label,key,opts)=>`
-    <div class="flex items-center justify-between gap-sm">
-      <label class="font-label-caps text-label-caps text-on-surface-variant">${label}</label>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+      <label style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#374151;font-family:Inter;white-space:nowrap">${label}</label>
       <select onchange="updateCompProp('${c.id}','${key}',this.value)"
-        class="bg-[#080E1A] border border-outline-variant rounded-lg px-sm py-1 font-body-sm text-body-sm text-on-surface focus:border-primary outline-none">
+        style="background:#030B14;border:1px solid rgba(0,229,255,.1);color:#E8F4FD;border-radius:8px;padding:6px 8px;font-size:12px;font-family:Inter;outline:none;cursor:pointer">
         ${opts.map(([v,l])=>`<option value="${v}"${c[key]===v?' selected':''}>${l}</option>`).join('')}
       </select>
     </div>`;
 
   const section = (title,content)=>`
-    <div class="border-b border-surface-variant pb-3">
-      <div class="font-label-caps text-label-caps text-on-surface-variant mb-2 uppercase tracking-wider">${title}</div>
-      <div class="flex flex-col gap-2">${content}</div>
+    <div style="border-bottom:1px solid rgba(0,229,255,.06);padding-bottom:12px">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#00E5FF;margin-bottom:8px;font-family:JetBrains Mono">${title}</div>
+      <div style="display:flex;flex-direction:column;gap:8px">${content}</div>
     </div>`;
 
-  let html = `<div class="flex items-center gap-2 mb-3 p-2 bg-surface-container-highest rounded-lg">
-    <span class="material-symbols-outlined text-primary text-[18px]">${getCompIcon(c.type)}</span>
-    <span class="font-body-sm text-body-sm text-on-surface font-medium capitalize">${c.type}</span>
-    <span class="font-code-sm text-[10px] text-on-surface-variant ml-auto opacity-60">${c.id?.split('-')[0]}</span>
+  let html = `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(0,229,255,.05);border:1px solid rgba(0,229,255,.1);border-radius:10px;margin-bottom:4px">
+    <div style="width:28px;height:28px;border-radius:8px;background:rgba(0,229,255,.1);display:flex;align-items:center;justify-content:center">
+      <span class="material-symbols-outlined" style="font-size:16px;color:#00E5FF">${getCompIcon(c.type)}</span>
+    </div>
+    <span style="font-size:13px;font-weight:600;color:#E8F4FD;font-family:Inter;text-transform:capitalize">${c.type}</span>
+    <span style="font-size:10px;color:#374151;margin-left:auto;font-family:JetBrains Mono">${c.id?.split('-')[0]}</span>
   </div>`;
+
+  const _toggle = (label,key,greenOn=true)=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:2px 0">
+      <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#374151;font-family:Inter">${label}</span>
+      <label style="position:relative;display:inline-flex;align-items:center;cursor:pointer">
+        <input type="checkbox" ${c[key]?'checked':''} onchange="updateCompProp('${c.id}','${key}',this.checked)" style="opacity:0;width:0;height:0;position:absolute">
+        <div style="width:36px;height:20px;background:${c[key]?(greenOn?'#22C55E':'#00E5FF'):'rgba(255,255,255,.1)'};border-radius:999px;position:relative;transition:background .2s">
+          <div style="position:absolute;top:2px;left:${c[key]?'18px':'2px'};width:16px;height:16px;background:white;border-radius:50%;transition:left .2s;box-shadow:0 1px 4px rgba(0,0,0,.4)"></div>
+        </div>
+      </label>
+    </div>`;
 
   // Common spacing
   const spacing = section('Spacing',`${field('Padding','padding','text','8px 16px')}${field('Margin','margin','text','0')}`);
@@ -946,10 +1228,7 @@ function renderPropertiesPanel(c) {
   switch(c.type) {
     case 'navbar':
       html += section('Brand',`${field('Logo Text','logo')}${field('Home URL','homeHref')}${colorField('Background','backgroundColor')}${colorField('Text Color','textColor')}`) + spacing;
-      html += `<div class="border-b border-surface-variant pb-3">
-        <div class="flex items-center justify-between mb-2"><span class="font-label-caps text-label-caps text-on-surface-variant">Sticky</span>
-        <label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" ${c.sticky?'checked':''} onchange="updateCompProp('${c.id}','sticky',this.checked)" class="sr-only peer">
-        <div class="w-9 h-5 bg-outline-variant peer-checked:bg-green-500 rounded-full transition-colors"></div></label></div></div>`;
+      html += section('Options', _toggle('Sticky navbar','sticky'));
       html += section('Nav Links', itemEditor('links',[['Label','label'],['URL','href']],{label:'Link',href:'#'},'Link'));
       html += section('CTA Buttons', itemEditor('ctaButtons',[['Label','label'],['URL','href'],['Variant','variant']],{label:'Sign up',href:'#',variant:'solid'},'Button'));
       break;
@@ -974,8 +1253,7 @@ function renderPropertiesPanel(c) {
       break;
     case 'button':
       html += section('Content',`${field('Label','label')}${field('URL','href')}${select('Size','size',[['sm','Small'],['md','Medium'],['lg','Large'],['xl','Extra Large']])}${select('Variant','variant',[['solid','Solid'],['outline','Outline'],['ghost','Ghost']])}`);
-      html += section('Style',`${colorField('Background','backgroundColor')}${colorField('Text Color','textColor')}${field('Border Radius','borderRadius','text','8px')}`);
-      html += `<div class="flex items-center justify-between mt-2"><span class="font-label-caps text-label-caps text-on-surface-variant">Full Width</span><label class="relative inline-flex cursor-pointer"><input type="checkbox" ${c.fullWidth?'checked':''} onchange="updateCompProp('${c.id}','fullWidth',this.checked)" class="sr-only peer"><div class="w-9 h-5 bg-outline-variant peer-checked:bg-green-500 rounded-full transition-colors"></div></label></div>`;
+      html += section('Style',`${colorField('Background','backgroundColor')}${colorField('Text Color','textColor')}${field('Border Radius','borderRadius','text','8px')}${_toggle('Full Width','fullWidth')}`);
       break;
     case 'section':
     case 'container':
@@ -1183,14 +1461,20 @@ function renderPropertiesPanel(c) {
       break;
     case 'video':
       html += section('Media',`${field('Video URL','src')}${field('Poster Image URL','poster')}${field('Height','height','text','400px')}`);
-      html += section('Style',`${colorField('Background','backgroundColor')}${field('Border Radius','borderRadius','text','8px')}`);
-      html += `<div class="flex flex-col gap-2">
-        <div class="flex items-center justify-between"><span class="font-label-caps text-label-caps text-on-surface-variant">Show Controls</span><label class="relative inline-flex cursor-pointer"><input type="checkbox" ${c.controls!==false?'checked':''} onchange="updateCompProp('${c.id}','controls',this.checked)" class="sr-only peer"><div class="w-9 h-5 bg-outline-variant peer-checked:bg-green-500 rounded-full transition-colors"></div></label></div>
-        <div class="flex items-center justify-between"><span class="font-label-caps text-label-caps text-on-surface-variant">Autoplay (muted loop)</span><label class="relative inline-flex cursor-pointer"><input type="checkbox" ${c.autoplay?'checked':''} onchange="updateCompProp('${c.id}','autoplay',this.checked)" class="sr-only peer"><div class="w-9 h-5 bg-outline-variant peer-checked:bg-primary rounded-full transition-colors"></div></label></div>
-      </div>`;
+      html += section('Style',`${colorField('Background','backgroundColor')}${field('Border Radius','borderRadius','text','8px')}${_toggle('Show Controls','controls')}${_toggle('Autoplay (muted loop)','autoplay',false)}`);
       break;
     case 'embed':
       html += section('Embed',`${field('URL','url')}${field('Height','height','text','400px')}${field('Border Radius','borderRadius','text','8px')}`);
+      break;
+    case 'columns': {
+      const numCols = (c.columns||[]).length || 2;
+      html += section('Layout',`${field('Gap','gap','text','24px')}${field('Padding','padding','text','0')}${field('Grid Template (e.g. 2fr 1fr)','gridTemplate','text','1fr 1fr')}`);
+      html += section('Columns',`<p style="font-size:11px;color:#374151;font-family:Inter;line-height:1.5">This component has ${numCols} column${numCols!==1?'s':''} side by side. Edit column count by adjusting the grid template above.<br><br>Each column&apos;s children can be added from the component library.</p>`);
+      break;
+    }
+    case 'card':
+      html += section('Content',`${field('Title','title')}${textarea('Text/Body','text',3)}${field('Tag/Badge','tag')}${field('Image URL','image')}${field('Image Alt','imageAlt')}${field('Link URL','link')}${field('CTA Label','cta')}`);
+      html += section('Style',`${colorField('Background','backgroundColor')}${field('Border','border','text','1px solid #e5e7eb')}${field('Border Radius','borderRadius','text','12px')}${field('Padding','padding','text','24px')}`);
       break;
     default:
       html += appearance + spacing;
@@ -1200,18 +1484,12 @@ function renderPropertiesPanel(c) {
   html += section('Size & Position',
     `${field('Width (e.g. 100%, 320px, auto)','compWidth','text')}
     ${field('Height (e.g. 400px — blank = auto)','compHeight','text')}
-    <div class="flex items-center justify-between mt-2">
-      <span class="font-label-caps text-label-caps text-on-surface-variant">Absolute (overlap)</span>
-      <label class="relative inline-flex items-center cursor-pointer">
-        <input type="checkbox" ${c.positionAbsolute?'checked':''} onchange="updateCompProp('${c.id}','positionAbsolute',this.checked)" class="sr-only peer">
-        <div class="w-9 h-5 bg-outline-variant peer-checked:bg-primary rounded-full transition-colors"></div>
-      </label>
-    </div>
+    ${_toggle('Absolute position (overlap)','positionAbsolute',false)}
     ${c.positionAbsolute ? field('Left (px)','left','number') + field('Top (px)','top','number') + field('Z-Index','zIndex','number') : ''}`
   );
 
-  html += `<button onclick="removeComp('${c.id}')" class="w-full mt-2 py-2 text-error border border-error/20 rounded-lg hover:bg-error/10 transition-colors font-body-sm text-body-sm flex items-center justify-center gap-2">
-    <span class="material-symbols-outlined text-[16px]">delete</span> Delete component
+  html += `<button onclick="removeComp('${c.id}')" style="width:100%;margin-top:4px;padding:9px;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);color:#EF4444;border-radius:10px;cursor:pointer;font-size:13px;font-family:Inter;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s" onmouseover="this.style.background='rgba(239,68,68,.12)'" onmouseout="this.style.background='rgba(239,68,68,.06)'">
+    <span class="material-symbols-outlined" style="font-size:16px">delete</span> Delete component
   </button>`;
 
   panel.innerHTML = html;
@@ -1294,6 +1572,7 @@ function removeArrayItem(id, key, idx) {
 
 // ── Export Modal ──────────────────────────────────────────────
 async function openExportModal() {
+  document.getElementById('export-modal')?.remove();
   const m = document.createElement('div');
   m.id='export-modal';
   m.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.7);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center';

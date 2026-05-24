@@ -39,6 +39,11 @@ const router = {
 
     this.currentPage = hash;
     document.getElementById('app').innerHTML = '';
+    // Remove any body-level modal overlays left over from previous page
+    ['export-modal','settings-modal','template-gallery-overlay',
+     'new-project-from-template','json-preview-modal',
+     'new-project-modal','new-tag-modal']
+      .forEach(id => document.getElementById(id)?.remove());
     await handler(params);
   },
 
