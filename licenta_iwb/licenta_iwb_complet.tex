@@ -1,0 +1,1306 @@
+% ============================================================
+%  LUCRARE DE LICENȚĂ - IWB Page Builder  (FIȘIER UNIC)
+%  Universitatea de Vest din Timișoara, Facultatea de Informatică
+%
+%  Compilare pe Overleaf:
+%    1. Uploadează DOAR acest fișier (fără altele)
+%    2. Settings → Compiler → pdfLaTeX
+%    3. Recompile (poate fi nevoie de 2 rulări pentru cuprins)
+%
+%  Compilare locală:
+%    pdflatex licenta_iwb_complet.tex
+%    pdflatex licenta_iwb_complet.tex   (a doua oară pentru cuprins)
+% ============================================================
+
+\documentclass[12pt,a4paper]{report}
+
+% ── Encoding & limbă ─────────────────────────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[romanian]{babel}
+
+% ── Margini și spațiere ──────────────────────────────────────────────────────
+\usepackage[a4paper, top=2.5cm, bottom=2.5cm, left=3cm, right=2.5cm]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+
+% ── Grafică ──────────────────────────────────────────────────────────────────
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{caption}
+
+% ── Tabele ───────────────────────────────────────────────────────────────────
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+
+% ── Culori ───────────────────────────────────────────────────────────────────
+\usepackage{xcolor}
+
+% ── Matematică ───────────────────────────────────────────────────────────────
+\usepackage{amsmath}
+
+% ── Enumerări personalizate ───────────────────────────────────────────────────
+\usepackage{enumitem}
+
+% ── Hyperref ─────────────────────────────────────────────────────────────────
+\usepackage[hyphens]{url}   % trebuie înaintea hyperref
+\usepackage[colorlinks=true, linkcolor=black, citecolor=blue!60!black,
+            urlcolor=blue!60!black, unicode=true]{hyperref}
+\usepackage{microtype}
+
+% ── Header/footer ────────────────────────────────────────────────────────────
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\leftmark}
+\fancyhead[R]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\chaptermark}[1]{\markboth{\thechapter.\ #1}{}}
+\renewcommand{\sectionmark}[1]{\markright{\thesection.\ #1}}
+\setlength{\headheight}{14.5pt}
+\emergencystretch=1.5em
+\widowpenalty=10000
+\clubpenalty=10000
+\renewcommand{\topfraction}{0.85}
+\renewcommand{\textfraction}{0.15}
+\renewcommand{\floatpagefraction}{0.9}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{document}
+
+% ═══════════════════════════════════════════════════════════════════════════
+%  PAGINA 1 DE TITLU
+% ═══════════════════════════════════════════════════════════════════════════
+\thispagestyle{empty}
+\begin{center}
+\includegraphics[width=90pt]{FI.png}\\[0.6cm]
+{\large\bfseries UNIVERSITATEA DE VEST DIN TIMIȘOARA}\\[0.25cm]
+{\large\bfseries FACULTATEA DE INFORMATICĂ}\\[0.25cm]
+{\large\bfseries PROGRAMUL DE STUDII DE LICENȚĂ: Informatică}
+\end{center}
+
+\vfill
+
+\begin{center}
+{\Huge\bfseries LUCRARE DE LICENȚĂ}
+\end{center}
+
+\vfill\vfill
+
+{\large\noindent\textbf{COORDONATOR:\hfill ABSOLVENT:}\\[0.3cm]
+\noindent Asist.drd. Alexandru Munteanu \hfill Șandru Nicolae-Andrei}
+
+\vspace{1.5cm}
+\begin{center}
+{\large\bfseries TIMIȘOARA\\[0.2cm] 2026}
+\end{center}
+\newpage
+
+% ═══════════════════════════════════════════════════════════════════════════
+%  PAGINA 2 DE TITLU
+% ═══════════════════════════════════════════════════════════════════════════
+\thispagestyle{empty}
+\begin{center}
+{\large\bfseries UNIVERSITATEA DE VEST DIN TIMIȘOARA}\\[0.25cm]
+{\large\bfseries FACULTATEA DE INFORMATICĂ}\\[0.25cm]
+{\large\bfseries PROGRAMUL DE STUDII DE LICENȚĂ: Informatică}
+\end{center}
+
+\vfill
+
+\begin{center}
+{\LARGE\bfseries Aplicație web de tip Page Builder\\[0.5cm]
+cu arhitectură client-server, \\[0.5cm]
+Django REST API și frontend SPA}
+\end{center}
+
+\vfill\vfill
+
+{\large\noindent\textbf{COORDONATOR:\hfill ABSOLVENT:}\\[0.3cm]
+\noindent Asist.drd. Alexandru Munteanu \hfill Șandru Nicolae-Andrei}
+
+\vspace{1.5cm}
+\begin{center}
+{\large\bfseries TIMIȘOARA\\[0.2cm] 2026}
+\end{center}
+\newpage
+
+% ═══════════════════════════════════════════════════════════════════════════
+%  ABSTRACT
+% ═══════════════════════════════════════════════════════════════════════════
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+
+\noindent
+\textit{IWB} is a full-stack web application for building web pages visually, by
+dragging components rather than writing markup. This thesis describes how it was
+designed and built. The architecture is the usual client-server split: a Django~5.2
+backend, running on Django REST Framework, exposes a JSON API, and a Single-Page
+Application written in plain HTML, CSS, and vanilla JavaScript talks to it over HTTP.
+There is no front-end framework anywhere in the project (a deliberate choice,
+one I defend in Chapter~3).
+
+The backend is split into seven Django apps: \texttt{core}, \texttt{users},
+\texttt{landing}, \texttt{projects}, \texttt{editor}, \texttt{exporter}, and
+\texttt{payments}. Each owns one concern and nothing more. A page is not a row in a
+table of widgets; it is a single JSON document, validated against 38 known component
+types every time it is written. Authentication uses JSON Web Tokens, with refresh
+tokens that rotate and get blacklisted after use.
+
+The part I find most useful in practice is the export engine: it walks a project's
+JSON layout and emits a self-contained HTML/CSS/JavaScript bundle, zipped and ready to
+drop onto any static host, with no server required to view the result. On top of that
+sit automatic versioning (a snapshot before every edit), public sharing through
+unique tokens, multiple pages per project, a form-submission inbox, and paid plans
+wired to Stripe.
+
+Sixty-eight integration tests exercise the API. The modular layout was chosen so the
+system could grow one app at a time; real-time collaboration, sketched in the
+conclusions, is the obvious next piece.
+
+\bigskip
+\noindent\textbf{Keywords:} page builder, Django, REST API, Single-Page Application,
+JSON layout, JWT authentication, static site export, Stripe.
+
+\bigskip\hrule\bigskip
+
+\noindent\textbf{Rezumat.}
+\textit{IWB} este un editor web vizual: construiești o pagină trăgând componente pe
+ecran, nu scriind cod. Lucrarea de față descrie cum l-am proiectat și cum l-am scris.
+Arhitectura e clasică, client-server: un backend Django~5.2 pe Django REST
+Framework, care vorbește JSON, și o aplicație Single-Page în HTML, CSS și JavaScript
+fără niciun framework. Comunicarea trece doar prin HTTP, deci cele două jumătăți nu
+se cunosc între ele decât prin contractul API.
+
+Backend-ul e împărțit în șapte aplicații Django, fiecare cu o singură treabă. O
+pagină nu e un set de rânduri într-o bază de date, ci un document JSON validat
+înainte de scriere față de 38 de tipuri de componente. Autentificarea folosește JWT
+cu refresh token care se rotește la fiecare reînnoire. Motorul de export ia layoutul
+JSON și scoate un pachet HTML/CSS/JS care merge pe orice hosting static, descărcat ca
+arhivă ZIP. Pe lângă astea: versionare automată, partajare publică, mai multe pagini
+per proiect, colectare de formulare și plăți prin Stripe.
+
+\bigskip
+\noindent\textbf{Cuvinte-cheie:} page builder, Django, REST API, Single-Page
+Application, layout JSON, autentificare JWT, export static, Stripe.
+
+\clearpage
+
+% ═══════════════════════════════════════════════════════════════════════════
+%  CUPRINS / FIGURI / TABELE
+% ═══════════════════════════════════════════════════════════════════════════
+\tableofcontents\clearpage
+
+% ═══════════════════════════════════════════════════════════════════════════
+%  CAPITOLUL 1 - INTRODUCERE
+% ═══════════════════════════════════════════════════════════════════════════
+\chapter{Introducere}
+
+\section{Context și descrierea lucrării}
+
+Cine vrea azi un site își lovește repede de o problemă veche: ca să-l faci de la
+zero ai nevoie de HTML, CSS și JavaScript, iar majoritatea oamenilor care au nevoie
+de un site nu știu și nici nu vor să învețe aceste lucruri. Un proprietar de cafenea
+vrea o pagină, nu un curs de front-end. Aici intervin editoarele vizuale de tip
+\textit{page builder}: muți blocuri pe ecran și pagina se construiește singură.
+
+IWB, de la \textit{I(t) W(ill) B(uild)}, este un astfel de
+editor, dar unul pe care l-am construit eu, în browser, și pe care îl descriu în
+lucrarea de față. Un utilizator logat își face un proiect, îl asamblează din
+componente gata făcute, îl versionează pe parcurs și, la final, îl exportă ca
+fișiere statice. Acel export e partea care contează cu adevărat: paginile rezultate
+nu mai au nevoie de IWB ca să trăiască. Le pui pe orice server și funcționează.
+
+Sub capotă e o arhitectură client-server obișnuită. Backend-ul, un API REST scris cu
+Django~5.2 și Django REST Framework, livrează JSON. Frontend-ul e o
+\textit{Single-Page Application} (SPA) în HTML, CSS și JavaScript nativ, și subliniez
+\emph{nativ}, fiindcă am evitat intenționat orice framework. Cele două vorbesc doar
+prin HTTP. Practic, poți arunca frontend-ul și scrie altul mâine; backend-ul nici nu
+ar observa.
+
+\section{Scopul și obiectivele lucrării}
+
+Țelul a fost unul singur și destul de ambițios pentru o licență: un sistem care
+acoperă tot drumul unei pagini, de la contul creat până la fișierul descărcat:
+autentificare, creare și editare de proiect, versionare, export static, partajare.
+Nu o demonstrație pe o singură funcție, ci un lanț întreg care merge cap
+la cap.
+
+Ca să ajung acolo, am avut câteva ținte concrete. Prima a fost să înțeleg cum se
+reprezintă o pagină ca date, nu ca text: am studiat principiile REST și am ajuns la
+ideea de a ține layoutul ca JSON ierarhic, ceea ce a dictat apoi tot modelul de date.
+Modelul trebuia să fie suficient de elastic cât să țină 38 de tipuri de componente
+și totuși să nu lase să treacă structuri invalide, de aici validarea la nivelul
+API. Backend-ul l-am tăiat în șapte aplicații Django, fiecare cu granița ei.
+Motorul de export a fost piesa cea mai grea: transformă layoutul JSON într-un pachet
+HTML/CSS/JS care stă pe picioarele lui, fără server. Frontend-ul, SPA cu rutare pe
+hash și starea de autentificare ținută în memorie, fără bibliotecă externă.
+Versionarea o face automat, prin snapshot înainte de fiecare modificare, cu
+restaurare la orice punct. Iar la final am legat plățile de Stripe, cu email HTML de
+confirmare după activarea abonamentului.
+
+\section{Motivația alegerii temei}
+
+Am ales tema din două motive care s-au întâlnit. Unul ține de Django: e printre cele
+mai folosite backend-uri Python \cite{djangodocs}, și mi-am dorit să-l cunosc nu
+superficial, ci până la capăt. Celălalt ține de problema în sine. Un editor vizual nu
+e un proiect plictisitor cu un CRUD și gata, te pune în fața unor întrebări reale:
+cum reprezinți o pagină ca date ierarhice, cum o validezi înainte să o scrii, cum o
+transformi înapoi în cod, cum ții starea într-un SPA fără să te încurci. Sunt
+probleme care apar în multe locuri, dincolo de proiectul ăsta.
+
+Apoi, JavaScript nativ. Puteam lua React și aș fi terminat editorul mai repede,
+recunosc asta fără probleme. Am refuzat tocmai pentru că voiam să văd ce e dedesubt:
+cum funcționează un router, cum sincronizezi un iframe, cum gestionezi undo/redo de
+mână, înainte să las un framework să facă totul pentru mine. E o decizie pe care, la
+un proiect comercial, probabil nu aș repeta-o. Pentru o licență, a fost exact ce
+trebuia. Și, oricum, scheletul rezultat se poate extinde mai departe într-un produs
+adevărat.
+
+\section{Structura lucrării}
+
+Restul lucrării e împărțit în patru capitole, plus acesta.
+
+Înainte de a-mi descrie propria soluție, în Capitolul~2 mă uit la ce există
+deja: platformele comerciale (Wix, Webflow, WordPress cu Elementor, Squarespace) și
+cele open-source (GrapesJS, editoarele desktop). Le compar într-un tabel cu IWB, mai
+ales pe criteriul care mă interesa cel mai tare, dacă te lasă sau nu să-ți iei
+codul și să pleci.
+
+Capitolul~3 e greul lucrării. Acolo desfac IWB bucată cu bucată: arhitectura
+în trei straturi, actorii și cazurile de utilizare, cerințele, tehnologiile, modelul
+de date și apoi fiecare modul de backend la rând: autentificare, proiecte, editor
+și validare, motorul de export, plățile Stripe, plus frontend-ul SPA. Cine vrea să
+înțeleagă cum e construit sistemul, aici găsește răspunsul.
+
+În Capitolul~4 arăt dacă funcționează: cum am testat, cum se împart cele 68
+de teste pe module, patru fluxuri urmărite de la cap la coadă, și, la fel de
+important, ce \emph{nu} face sistemul încă.
+
+Capitolul~5 strânge concluziile și pune pe masă ce ar urma: canvas vizual cu
+drag-and-drop adevărat, export pe mai multe pagini, colaborare în timp real, mutarea
+imaginilor în cloud și SEO pentru paginile publice.
+
+% ═══════════════════════════════════════════════════════════════════════════
+%  CAPITOLUL 2 - STATE OF THE ART
+% ═══════════════════════════════════════════════════════════════════════════
+\chapter{State of the Art}
+
+\section{Platforme comerciale de tip page builder}
+
+Piața e plină. Există deja soluții mature, cu bugete de marketing pe care un proiect
+de licență nici nu și le imaginează. Nu am pretenția să le concurez, mă uit la ele
+ca să văd unde se opresc și ce las eu deschis acolo unde ele închid.
+
+\subsection{Wix}
+
+Wix e poate cel mai cunoscut nume din zonă, cu peste 200 de milioane de conturi
+\cite{wixwebsite}. Editor drag-and-drop, hosting inclus, sute de template-uri. Pe
+hârtie, tot ce ai nevoie. Problema apare când vrei să pleci. Layoutul e ținut în
+structuri proprii, nedocumentate, pe care nu le poți scoate afară; site-ul tău
+trăiește pe serverele lor și nicăieri altundeva. Adaugă peste asta modelul SaaS cu
+abonamente etajate, reclame Wix pe planul gratuit și interdicția de a lega un domeniu
+propriu fără să plătești. Pentru un utilizator cât de cât tehnic, lipsa exportului de
+cod e dealbreaker-ul: dacă vrei pe altă platformă, o iei de la zero. Capcana pe
+care am vrut ca IWB să o evite.
+
+\subsection{Webflow}
+
+Webflow joacă în altă ligă. Nu e pentru proprietarul de cafenea, ci pentru designeri
+care știu ce e un \texttt{flexbox} și vor control fin pe CSS, animații și interacțiuni
+\cite{webflowsite}. Editorul lui îți arată în timp real structura DOM și proprietățile
+CSS, seamănă mai mult cu un IDE vizual decât cu un editor de blocuri. Și, spre
+deosebire de Wix, te lasă să exporți HTML/CSS, deci poți migra măcar parțial (zic
+parțial fiindcă JavaScript-ul dinamic nu vine cu tine). Ce nu îți dă e un API REST
+public pentru conținut, adică lucrul de la care a pornit IWB. Prețul plătit
+pentru toată puterea asta: o curbă de învățare abruptă și abonamente pe măsură.
+
+\subsection{WordPress cu Elementor}
+
+WordPress e peste tot, vreo 43\% din site-urile lumii merg pe el \cite{w3techs},
+iar Elementor pune un editor drag-and-drop deasupra. Combinația e enorm de populară,
+și din motive bune. Dar are un cost arhitectural pe care îl plătești zilnic: îți
+trebuie PHP și MySQL pe server, WordPress plus Elementor cer update-uri de securitate
+constante (WordPress e una dintre cele mai atacate ținte de pe web, nu o spun ca
+exagerare), iar fiecare plugin în plus mai taie din viteză. Layoutul Elementor stă în
+tabele proprii, ca meta-date ale paginii WordPress, ceea ce face versionarea și
+exportul net mai greoaie decât dacă ai pur și simplu un JSON, cum am la IWB.
+
+\subsection{Squarespace}
+
+Squarespace e o platformă SaaS all-in-one care mizează pe design îngrijit
+\cite{squarespace}, și aici nu dezamăgește, template-urile lor arată bine. Doar că
+povestea cu exportul e aceeași ca la Wix: nu poți scoate codul, ești legat de
+platformă. E \textit{vendor lock-in} în formă pură. Mâine îți dublează prețul sau
+îngheață o funcție de care depinzi, iar singura ta opțiune e să reconstruiești
+site-ul în altă parte. ZIP-ul static al IWB e răspunsul meu la fix scenariul ăsta:
+arhiva e a ta și o duci unde vrei.
+
+\section{Soluții open-source}
+
+\subsection{GrapesJS}
+
+GrapesJS e cel mai apropiat ca spirit de ce am făcut eu, și totuși altceva. E un
+framework open-source în JavaScript pentru \emph{a construi} editoare vizuale
+\cite{grapesjs}, adică îți dă piesele, nu produsul. Backend, conturi,
+autentificare: nu există, le pui tu. Diferența cu IWB e tocmai asta: GrapesJS e un
+toolkit din care îți faci editorul, pe când IWB e deja aplicația întreagă, cu backend,
+frontend și export la pachet.
+
+\subsection{Editoare desktop}
+
+Mai sunt și editoarele desktop (Pinegrow, Bootstrap Studio) care scot HTML/CSS
+curat, dar se opresc acolo. Server, versionare, partajare în echipă: nimic. Pentru un
+om care lucrează singur, offline, sunt perfecte. Doar că în clipa în care vrei conturi,
+un API sau să strângi formulare de la vizitatorii paginii, ai ieșit din ce pot ele.
+
+\section{Abordări arhitecturale în editoare vizuale}
+
+Întrebarea de fond la orice page builder e: cum ții pagina pe disc? Sunt câteva
+răspunsuri, și fiecare are un preț. Varianta pe care am ales-o și eu, JSON
+arborescent, e cea mai naturală, fiindcă un document HTML \emph{este} deja un
+arbore, și un obiect JSON se mulează pe el aproape unu-la-unu. Bonus: versionarea
+devine trivială (salvezi tot arborele ca snapshot) și randarea în HTML se face printr-o
+parcurgere recursivă. Editoarele desktop merg uneori pe XML sau HTML direct ca sursă
+de adevăr, corect, dar incomod de procesat din cod. Iar la celălalt capăt e
+normalizarea completă: spargi fiecare componentă într-un rând de tabel. Câștigi
+interogări SQL puternice, dar plătești scump: structura arborescentă se bate cap în
+cap cu modelul relațional, iar versionarea se complică imediat. Pentru ce face IWB,
+JSON-ul a fost alegerea clară.
+
+Tendința de fond e arhitectura \textit{headless}: un backend API-first care doar
+livrează date, iar deasupra pui orice client vrei \cite{mdnFetch}. IWB e pe
+linia asta: backend-ul Django e un API REST curat \cite{fielding2000}, iar
+frontend-ul e o aplicație separată care s-ar putea înlocui fără ca serverul să afle.
+
+\section{Tabel comparativ al soluțiilor existente}
+
+Tabelul~\ref{tab:comparison} pune toate astea cap la cap, alături de IWB.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Compararea principalelor soluții de tip page builder}
+  \label{tab:comparison}
+  \renewcommand{\arraystretch}{1.3}
+  \begin{tabularx}{\textwidth}{>{\bfseries}l *{5}{>{\centering\arraybackslash}X}}
+    \toprule
+    Criteriu & Wix & Webflow & WP + Elementor & GrapesJS & \textbf{IWB} \\
+    \midrule
+    Tip licență      & SaaS & SaaS  & Open+SaaS & MIT   & MIT \\
+    Editor vizual    & Da   & Da    & Da        & Da    & Da \\
+    Backend propriu  & Da   & Da    & PHP+MySQL & Nu    & Da (Django) \\
+    Export static    & Nu   & Parț. & Nu        & Da    & Da (ZIP) \\
+    Versioning       & Da   & Da    & Plugin    & Nu    & Da (auto) \\
+    API REST deschis & Nu   & Limit.& Nu        & N/A   & Da \\
+    Open-source      & Nu   & Nu    & Parțial   & Da    & Da \\
+    Auth JWT         & Nu   & Nu    & Nu        & N/A   & Da \\
+    Plăți integrate  & Da   & Da    & Plugin    & Nu    & Da (Stripe) \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\section{Concluzii}
+
+Concluzia care iese din tabel e simplă: niciuna dintre soluțiile open-source pe care
+le-am analizat nu pune la un loc backend REST, frontend SPA și export static într-un
+singur sistem coerent, documentat și testat. Ori ai toolkit fără server (GrapesJS),
+ori ai editor desktop fără API, ori ai SaaS închis care nu-ți dă codul. Spațiul ăsta
+gol e locul în care stă IWB, un sistem complet, modular, care exportă static și
+care, pe deasupra, știe să încaseze bani prin Stripe.
+
+% ═══════════════════════════════════════════════════════════════════════════
+%  CAPITOLUL 3 - DESCRIEREA APLICAȚIEI
+% ═══════════════════════════════════════════════════════════════════════════
+\chapter{Descrierea Aplicației}
+
+\section{Arhitectura sistemului}
+
+IWB stă pe trei straturi, ca în Figura~\ref{fig:architecture}. Sus, stratul de
+prezentare, un SPA \cite{mdnSPA} în HTML, CSS și JavaScript nativ, fără framework
+și fără pas de build (deschizi fișierul și merge). La mijloc, creierul: un API REST
+\cite{fielding2000} pe Django~5.2 care duce toată logica: validare, versionare,
+autentificare, business. Jos, datele: SQLite în development, fiindcă e zero
+configurație, și PostgreSQL în producție. Pe amândouă le ating doar prin ORM-ul
+Django; SQL scris de mână nu există nicăieri în proiect, și asta e intenționat:
+am vrut ca trecerea SQLite$\rightarrow$PostgreSQL să nu ceară nicio modificare de cod.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.92\linewidth]{diag_architecture}
+  \caption{Diagrama de arhitectură a sistemului IWB}
+  \label{fig:architecture}
+\end{figure}
+
+Granița dintre prezentare și aplicație e doar HTTP: nimic altceva nu trece între ele.
+De aici și libertatea de a rescrie un strat fără să-l atingi pe celălalt.
+Tabelul~\ref{tab:urlmap} arată cum se împart URL-urile API pe module.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Harta URL-urilor API}
+  \label{tab:urlmap}
+
+  \begin{tabularx}{\textwidth}{>{\ttfamily}l X}
+    \toprule
+    \normalfont\textbf{Prefix URL} & \textbf{Aplicație / Responsabilitate} \\
+    \midrule
+    /api/             & \texttt{landing}, informații publice despre API \\
+    /api/auth/*       & \texttt{users}, înregistrare, login, logout, profil \\
+    /api/projects/*   & \texttt{projects}, CRUD, versioning, sharing, pagini \\
+    /api/editor/projects/\{id\}/* & \texttt{editor}, operații granulare pe componente \\
+    /api/export/\{id\}/ & \texttt{exporter}, export ZIP sau JSON \\
+    /api/payments/*   & \texttt{payments}, Stripe checkout, status abonament \\
+    \midrule
+    \textit{orice altceva} & SPA catch-all, servește \texttt{index.html} \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\section{Actori și cazuri de utilizare}
+
+Sunt trei feluri de actori în sistem. Vizitatorul neautentificat vede pagina de
+prezentare, se poate înregistra sau loga și poate deschide paginile publice ale
+altora printr-un link de partajare. Atât, nimic ce ține de cont. Utilizatorul logat
+e cel pentru care a fost gândit totul: creează, editează, versionează, exportă și
+partajează propriile proiecte, și tot el poate cumpăra un plan Pro sau Enterprise prin
+Stripe. Iar deasupra tuturor stă administratorul, care umblă la utilizatori, proiecte,
+template-uri și plăți direct din Django Admin. Nu am construit o interfață separată
+de administrare, fiindcă cea din Django acoperă deja tot ce aveam nevoie.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.92\linewidth]{diag_usecase}
+  \caption{Diagrama UML Use Case a aplicației IWB}
+  \label{fig:usecase}
+\end{figure}
+
+Fluxurile urmăresc viața unui proiect de la naștere până la publicare. Totul începe
+cu un cont: te înregistrezi cu email și parolă, te loghezi, sistemul îți dă token-uri
+JWT. De aici încolo poți crea proiecte, să le listezi, să le schimbi metadatele, să
+duplici unul sau să-l ștergi. Editarea propriu-zisă înseamnă adăugat, modificat, șters
+și reordonat componente, și fiecare astfel de gest lasă în urmă un snapshot, fără
+să ceri tu asta. Versionarea îți arată apoi tot istoricul și te lasă să sari înapoi la
+orice stare. Exportul scoate fie o arhivă ZIP descărcabilă, fie un JSON de
+previzualizare. Partajarea publică deschide proiectul pentru oricine are token-ul
+unic. Pe proiectele cu mai multe pagini poți adăuga, reordona și alege pagina
+principală. Vizitatorii paginilor publice pot completa formulare, pe care proprietarul
+le citește mai târziu. Și, în fine, cumperi un plan Pro sau Enterprise printr-un
+checkout Stripe care îți trimite confirmarea pe email.
+
+\section{Cerințe funcționale și nefuncționale}
+
+Pe partea funcțională, lucrurile se grupează firesc pe câteva zone. Autentificarea:
+cont cu email unic și parolă, iar la login token-uri JWT care se rotesc la fiecare
+reînnoire. Proiectele: utilizatorul logat le creează, listează, actualizează și
+șterge pe ale lui, cu o regulă pe care nu o calc nicăieri: orice scriere validează
+mai întâi JSON-ul layoutului și salvează un snapshot înainte, ca să poată reveni
+oricând. Export și partajare: descarci ZIP sau vezi JSON-ul, respectiv aprinzi/stingi
+accesul public și, dacă vrei, regenerezi token-ul (caz în care vechiul link moare pe
+loc). Formularele de pe paginile publice le poate trimite oricine, dar cu un plafon de
+zece submisii pe oră per IP, altfel paginile s-ar umple de spam într-o zi. Plățile
+trec prin Stripe, cu un email HTML de confirmare la fiecare activare.
+
+Cerințele nefuncționale m-au preocupat trei: securitate, modularitate,
+portabilitate. Tot ce modifică date e în spatele JWT \cite{rfc7519}, iar accesul la
+resursele cuiva e zăvorât de permisiunea \texttt{IsOwner}: nu vezi proiectele
+altuia, punct. Fiecare aplicație Django face un singur lucru, iar testele ating
+endpoint-urile principale din fiecare modul. Pe extensibilitate mi-am impus o regulă
+pe care o verific în Capitolul~3.6: un tip nou de componentă nu trebuie să ceară
+atingeri în mai mult de trei fișiere. Iar exportul static merge în orice browser
+modern fără nicio dependență externă, ca și baza de date care funcționează la fel
+pe SQLite și pe PostgreSQL.
+
+\section{Tehnologii utilizate}
+
+Backend-ul e Python~3.10+ pe Django~5.2 LTS. Am ales special varianta LTS,
+fiindcă are suport până în 2028 \cite{djangodocs} și nu voiam să-mi expire framework-ul
+la un an după ce predau lucrarea. Peste Django stă Django REST Framework~3.17
+\cite{drfdocs}, de unde iau patru lucruri pe care altfel le-aș fi scris singur:
+serializatorii care validează intrarea și scot modelele în JSON, ViewSet-urile și
+APIView-urile pentru cereri, router-ele care generează URL-urile, și sistemul de
+permisiuni pe care l-am extins cu propriile clase. JWT-ul vine din
+\texttt{simplejwt}~5.5 \cite{simplejwt}, pe care l-am pus pe rotație automată plus
+blacklisting. Restul sunt piese mici dar necesare: \texttt{django-cors-headers}~4.9
+pentru CORS, \texttt{python-decouple}~3.8 ca să țin secretele afară din cod,
+\texttt{Pillow}~11.2 pentru avatare. Stripe intră prin SDK-ul Python oficial
+\cite{stripedocs}. Baza de date: SQLite \cite{sqlitedocs} la mine pe laptop,
+PostgreSQL \cite{postgresqldocs} pentru orice deployment serios.
+
+Frontend-ul e doar HTML5, CSS3 și JavaScript ES6+. Fără framework, fără bundler,
+fără pas de build. Am ținut la asta de la prima linie. Singura concesie e Tailwind,
+adus prin CDN, dar \emph{numai} în interfața editorului; în fișierele exportate nu
+există urmă de Tailwind, fiindcă nu vreau ca site-urile generate să depindă de un CDN
+extern. Comunicarea cu backend-ul o fac prin Fetch API \cite{mdnFetch}, cel nativ din
+browser.
+
+\section{Modelul de date}
+
+Decizia de la baza întregului model a fost să țin layoutul ca un singur document JSON,
+nu spart pe tabele. Nu a fost evidentă de la început: normalizarea, cu o componentă
+pe rând, mi-ar fi dat interogări SQL mai bogate. Am ales totuși JSON-ul din trei
+motive care, pentru un page builder, cântăresc mai greu. Întâi, arborele paginii se
+mulează pe un obiect JSON \cite{rfc8259} aproape fără efort. Apoi, versionarea: un
+snapshot înseamnă să copiez un câmp, nu zeci de rânduri din cinci tabele. Și, în fine,
+operațiile zilnice ale unui editor nu cer join-uri complicate între componente: mai
+mereu vrei tot arborele sau o subramură, nu „toate butoanele albastre din proiecte
+create marțea". Validarea structurii o fac în aplicație, la frontiera API, înainte de
+orice scriere, niciodată în baza de date.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.92\linewidth]{diag_datamodel}
+  \caption{Diagrama entitate-relație simplificată a modelelor IWB}
+  \label{fig:datamodel}
+\end{figure}
+
+Cinci dintre modele, \texttt{Project}, \texttt{ProjectVersion}, \texttt{Page},
+\texttt{Tag}, \texttt{FormSubmission} și \texttt{ProjectTemplate}, pleacă toate de
+la \texttt{core.BaseModel}. Acolo am pus ce trebuie să aibă orice entitate: cheie
+primară UUID generată automat (aleg UUID tocmai ca nimeni să nu poată ghici ID-ul
+următor și să enumere proiectele altora) plus timestamp-urile de creare și modificare.
+
+\texttt{users.User} extinde \texttt{AbstractUser} din Django. I-am mutat
+autentificarea pe \texttt{email} (unic), i-am adăugat o biografie opțională, un avatar
+care ajunge în folderul \texttt{avatars/}, câmpul \texttt{plan} (free/pro/enterprise,
+implicit \texttt{free}) și \texttt{plan\_expires\_at}. Trucul util e proprietatea
+\texttt{is\_pro}: returnează \texttt{True} dacă planul e Pro sau Enterprise și încă nu
+a expirat. O citesc direct din obiectul user, fără query separat.
+
+\texttt{Project} e inima modelului. Ține layoutul într-un JSONField și, lângă el, un
+al doilea JSONField numit \texttt{meta}: titlu, descriere, limbă, CSS și JS
+personalizate. Partajarea publică o controlez cu o pereche: \texttt{share\_token}
+(UUID unic) și booleanul \texttt{is\_public}. Un proiect e \texttt{draft},
+\texttt{published} sau \texttt{archived}, iar slug-ul e unic per utilizator, nu
+global, fiindcă doi oameni au tot dreptul să aibă fiecare un proiect „portofoliu".
+Pentru organizare, proiectele se leagă Many-to-Many de \texttt{Tag}.
+
+Versionarea trăiește în \texttt{ProjectVersion}, și aici am ținut neapărat ca
+snapshot-urile să fie imutabile: odată scrise, nu se mai ating. Fiecare versiune
+are un număr care crește monoton, câmpul \texttt{layout\_snapshot}, o notă opțională
+și o referință la cine a făcut modificarea (\texttt{SET\_NULL} la ștergere, ca să nu
+pierd versiunea dacă dispare contul). \texttt{Page} reprezintă paginile individuale,
+fiecare cu propriul \texttt{layout}, o ordine și steagul \texttt{is\_homepage}.
+\texttt{Tag} e simplu: nume și o culoare hex. Iar \texttt{FormSubmission} strânge
+ce trimit vizitatorii: ID-ul formularului, datele ca JSON, IP-ul și user agent-ul.
+
+Schema layoutului are un singur câmp rădăcină. La vârf, \texttt{layout} e un obiect cu
+o cheie, \texttt{"components"}, și aceasta e o listă de componente. O componentă are
+două câmpuri obligatorii: \texttt{"id"} (un UUID unic în tot arborele) și
+\texttt{"type"} (unul dintre cele 38 de tipuri), plus oricâte câmpuri opționale
+specifice tipului: \texttt{"text"}, \texttt{"src"}, \texttt{"href"}, \texttt{"style"}
+și așa mai departe. Componentele-container, \texttt{section}, \texttt{container},
+\texttt{columns}, \texttt{footer}, \texttt{hero} și celelalte din mulțimea
+\texttt{CHILDREN\_TYPES}, mai au și câmpul \texttt{"children"}, lista copiilor, ceea
+ce le lasă să se imbrice oricât de adânc. Unicitatea ID-urilor o verific global cu un
+helper, \texttt{\_collect\_ids()}, care coboară recursiv prin \texttt{children},
+\texttt{items} și \texttt{columns} și strânge toți identificatorii înainte de scriere.
+Detaliul important e că verific unicitatea \emph{între} niveluri, nu doar pe orizontală: un copil nu poate fura ID-ul părintelui.
+
+\texttt{meta} are propria lui schemă. \texttt{"title"} ajunge titlul paginii
+exportate, \texttt{"description"} devine meta description pentru motoarele de căutare,
+\texttt{"lang"} e codul limbii (implicit \texttt{"ro"}, fiindcă majoritatea celor care
+ar folosi IWB scriu în română), iar \texttt{"custom\_css"} și \texttt{"custom\_js"}
+sunt injectate la coada fișierelor generate, pentru cine vrea să intervină manual.
+Restul sunt câmpuri de temă: \texttt{"font"}, \texttt{"primaryColor"},
+\texttt{"textColor"}, \texttt{"bgColor"}, \texttt{"maxWidth"}. Fiecare se duce
+direct într-o variabilă CSS globală a exportului. Schimbi o culoare în \texttt{meta} și
+tot site-ul se schimbă, fără să atingi nicio componentă în parte.
+
+\section{Backend-ul Django}
+
+\subsection{Aplicațiile \texttt{landing} și \texttt{core}}
+
+\texttt{landing} e cât se poate de mic: un singur endpoint public, \texttt{GET /api/},
+care întoarce un index JSON cu toate rutele API-ului. E documentație vie și totodată
+ușa de intrare pentru un client nou: intri pe \texttt{/api/} și vezi de unde să
+începi, fără să fii logat și fără să citești cod.
+
+\texttt{core} nu are URL-uri deloc; e o bibliotecă internă pe care o folosesc toate
+celelalte. Aici stau \texttt{BaseModel} (UUID + timestamps), permisiunea
+\texttt{IsOwner} și, cel mai important, \texttt{validators.py}, cu
+\texttt{validate\_layout()} și \texttt{validate\_component()}. Prima verifică trei
+lucruri: că layoutul are cheia \texttt{"components"} cu o listă, că toate ID-urile din
+arbore sunt unice (le strânge recursiv din \texttt{children}, \texttt{items} și
+\texttt{columns}) și că fiecare componentă trece de \texttt{validate\_component()}. A
+doua se uită la o componentă singură: are \texttt{"id"} și \texttt{"type"}? E tipul
+printre cele 38 cunoscute? Și apoi coboară în copii și repetă. E codul pe care îl
+consider cel mai critic din tot backend-ul, fiindcă el e zidul dintre date curate și
+date corupte. De aceea are și cele mai multe teste, unsprezece, cât toată aplicația
+\texttt{users}.
+
+\subsection{Autentificare și gestionarea utilizatorilor}
+
+\texttt{users} duce tot ciclul de viață al unui cont, și am avut grijă peste tot să
+economisesc apeluri inutile. \texttt{RegisterView} creează utilizatorul și îi dă
+token-urile JWT pe loc. Nu te pune să faci login imediat după ce te-ai înregistrat,
+fiindcă e o frecare fără rost. \texttt{LoginView} merge cu un serializator custom care
+bagă în răspuns și datele utilizatorului, nu doar token-urile, ca frontend-ul să-și
+poată construi toată starea dintr-un singur request. \texttt{logout\_view}
+blacklistează refresh token-ul și încheie sesiunea. Iar \texttt{ProfileView} și
+\texttt{ChangePasswordView} se ocupă de profil, respectiv de schimbarea parolei (cu
+verificarea parolei curente, evident, altfel cine îți fură sesiunea ți-ar putea
+schimba parola direct).
+
+JWT-ul \cite{rfc7519} l-am configurat cu rotație și blacklisting. La fiecare reînnoire
+de access token, refresh-ul vechi ajunge pe o listă neagră din baza de date, așa că
+nu mai poate fi folosit a doua oară. Chiar dacă cineva l-a interceptat, fereastra
+lui de viață e deja închisă. Duratele celor două token-uri le țin în variabile de
+mediu, ca să le pot strânge sau lărgi fără să recompilez nimic.
+
+Concret, blocul \texttt{SIMPLE\_JWT} din \texttt{settings.py} pune
+\texttt{ACCESS\_TOKEN\_LIFETIME} pe 60 de minute (suprascris de
+\path{ACCESS_TOKEN_LIFETIME_MINUTES}) și \texttt{REFRESH\_TOKEN\_LIFETIME} pe 7 zile
+(\path{REFRESH_TOKEN_LIFETIME_DAYS}). Ca să meargă blacklisting-ul trebuie să ai
+aplicația \path{rest_framework_simplejwt.token_blacklist} în \texttt{INSTALLED\_APPS}
+și două tabele în baza de date: \path{token_blacklist_outstandingtoken} și
+\path{token_blacklist_blacklistedtoken}. Are însă un revers pe care l-am observat
+repede: tabelele astea cresc la nesfârșit dacă nu le cureți. De aici comanda
+\texttt{flushexpiredtokens}, rulată periodic, care șterge token-urile deja expirate:
+fără ea, baza de date s-ar îngrășa în gol cu fiecare login.
+
+\subsection{Gestionarea proiectelor și versionare}
+
+\texttt{ProjectViewSet} e un \texttt{ModelViewSet} DRF (adică CRUD-ul standard vine
+gratis), peste care am pus câteva acțiuni proprii. \texttt{toggle-public} aprinde sau
+stinge accesul fără cont. \texttt{regenerate-token} generează un \texttt{share\_token}
+nou și, prin asta, omoară instant orice link vechi pe care l-ai trimis cuiva. Util
+când îți dai seama că ai partajat din greșeală. \texttt{versions} listează
+snapshot-urile, iar \texttt{restore-version} te duce înapoi la oricare dintre ele. Și
+aici e un detaliu la care țin: restaurarea nu aruncă starea curentă, ci o salvează
+mai întâi ca un snapshot nou (cu o notă pusă automat) și abia apoi suprascrie
+\texttt{layout}. Practic, nu poți pierde nimic ireversibil, nici măcar dacă restaurezi
+„greșit".
+
+Tot aici stau și restul: \texttt{SharedProjectView} pentru accesul public (întoarce
+layoutul după \texttt{share\_token}, dar numai dacă \texttt{is\_public=True}),
+\texttt{PageDetailView} și \texttt{PageSetHomepageView} pentru paginile individuale,
+\texttt{ProjectTemplateViewSet} care listează și instanțiază template-urile gata
+făcute, și \texttt{FormSubmitView}, singurul endpoint deschis spre lume, deci și
+singurul cu rate limiting (maximum zece submisii pe oră per IP, prin cache-ul Django).
+
+Când creezi o pagină nouă, slug-ul se generează singur din titlu: curăț caracterele
+speciale și, dacă slug-ul există deja, adaug un sufix numeric (\texttt{-1},
+\texttt{-2}, și tot așa). \texttt{reorder-pages} are o gardă pe care am pus-o
+intenționat strictă: lista de ID-uri primită trebuie să conțină \emph{exact} paginile
+proiectului, nici una în plus, nici una lipsă, altfel refuz reordonarea. Nu vreau
+să pierd sau să dublez o pagină dintr-un request prost format. \texttt{set-homepage}
+stinge \texttt{is\_homepage} pe toate paginile înainte să-l aprindă pe cea aleasă, ca
+să existe mereu fix una principală, niciodată zero sau două.
+
+\texttt{duplicate} face o copie adâncă: \texttt{layout}, \texttt{meta}, statusul,
+relațiile \texttt{Tag}, totul, cu un slug nou obținut prin sufixul \texttt{-copy}
+(și rezolvarea coliziunilor, ca mai sus). Paginile le copiez una câte una, fiecare cu
+\texttt{layout}-ul ei. Un singur lucru \emph{nu} se moștenește: partajarea. Copia
+pornește cu \texttt{is\_public=False} și fără \texttt{share\_token}. Ar fi o
+surpriză neplăcută ca, duplicând un proiect, să expui din greșeală și copia spre
+exterior.
+
+\subsection{Editarea vizuală și validarea layoutului}
+
+\texttt{editor} nu are modele proprii: lucrează direct pe câmpul \texttt{layout} al
+lui \texttt{Project}. Asta a fost o decizie conștientă: tot ce ține de o pagină e deja
+în acel JSON, deci de ce să mai inventez tabele? Fiecare view din modul cheamă, înainte
+de orice modificare, același helper de snapshot, care creează un \texttt{ProjectVersion}
+cu starea de dinainte și incrementează contorul de versiune. Figura~\ref{fig:editflow}
+arată fluxul întreg al unei modificări.
+
+\begin{figure}[!htb]
+  \centering
+  \includegraphics[width=0.50\linewidth]{diag_editflow}
+  \caption{Fluxul de editare și export al unui proiect IWB}
+  \label{fig:editflow}
+\end{figure}
+
+Orice modificare de layout trece prin aceiași patru pași, în aceeași ordine. Întâi
+serializatorul DRF se uită la tipuri și la câmpurile obligatorii. Apoi
+\texttt{validate\_layout()} coboară recursiv prin structura JSON. Abia după ce a trecut
+de amândouă, helper-ul de snapshot îngheață layoutul curent într-un
+\texttt{ProjectVersion}. Și de-abia atunci scriu noua valoare. Ordinea contează:
+validez înainte să salvez snapshot-ul, ca să nu umplu istoricul cu versiuni provenite
+din cereri care oricum aveau să fie respinse. Răspunsul întoarce layoutul întreg,
+actualizat, ca frontend-ul să-și sincronizeze starea fără un al doilea apel.
+
+View-urile sunt cinci. \texttt{ProjectLayoutView} citește și înlocuiește layoutul cu
+totul. \texttt{ComponentUpsertView} adaugă sau actualizează o componentă după ID
+(de unde și „upsert", nu mă interesează dacă există deja, o pun la locul ei).
+\texttt{ComponentDeleteView} șterge una. \texttt{ComponentReorderView} reordonează
+după o listă de ID-uri. Iar \texttt{ComponentDefaultsView} întoarce proprietățile
+implicite ale fiecărui tip. E cel pe care frontend-ul îl cheamă în clipa în care
+tragi o componentă nouă pe pagină.
+
+Tabelul~\ref{tab:components} adună cele 38 de tipuri pe cinci categorii. Aici e și
+locul unde mi-am ținut promisiunea de extensibilitate din secțiunea de cerințe: ca să
+adaugi un tip nou atingi exact trei fișiere, nici mai mult. Pui tipul în setul
+\texttt{VALID\_COMPONENT\_TYPES} din \texttt{core/validators.py}, scrii metoda
+\texttt{\_render\_<type>()} în \texttt{exporter/engine.py} și adaugi proprietățile
+implicite în dicționarul \texttt{COMPONENT\_DEFAULTS} din
+\texttt{editor/serializers.py}. Trei fișiere, trei modificări. Am verificat regula
+de fiecare dată când am mai adăugat un tip, și a ținut.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Categoriile și tipurile de componente IWB}
+  \label{tab:components}
+  \renewcommand{\arraystretch}{1.2}
+  \begin{tabularx}{\textwidth}{>{\bfseries}l X}
+    \toprule
+    Categorie & Tipuri \\
+    \midrule
+    Layout (8)      & \texttt{navbar, section, container, columns, footer,
+                      divider, spacer, banner} \\
+    Conținut (7)    & \texttt{text, heading, richtext, blockquote, code\_block,
+                      icon, badge} \\
+    Media (5)       & \texttt{image, video, embed, gallery, logo\_strip} \\
+    Interactive (5) & \texttt{button, link, social\_links, form, countdown} \\
+    Secțiuni (13)   & \texttt{hero, features, pricing, testimonials, faq, cta,
+                      team, stats, card, cards\_grid, timeline, tabs, contact} \\
+    \midrule
+    \textbf{Total (38)} & \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\subsection{Motorul de export static}
+
+Aici e, după mine, partea cea mai interesantă a lucrării: locul unde datele redevin
+cod. \texttt{exporter/engine.py} expune trei funcții: \texttt{build\_html()},
+\texttt{build\_css()} și \texttt{build\_js()}. În interior, o clasă \texttt{Renderer}
+parcurge recursiv arborele de componente și trimite fiecare componentă spre metoda ei
+de randare, \texttt{\_render\_<type>()}. E reversul validării: una verifică
+arborele, cealaltă îl transformă înapoi în HTML, amândouă coborând prin aceeași
+structură.
+
+CSS-ul pleacă de la un set de variabile globale puse în \texttt{:root} și completate
+din \texttt{meta}: \texttt{--font} (familia de fonturi, cu preconectare la Google
+Fonts în \texttt{<head>}, ca să nu aștepte pagina după font), \texttt{--primary}
+(accentul, pe butoane și elemente interactive), \texttt{--text}, \texttt{--bg},
+\texttt{--max-w} (lățimea maximă a containerelor) și \texttt{--section-py} (padding-ul
+vertical al secțiunilor). Toată ideea e că schimbi un singur set de variabile și se
+schimbă tot site-ul. Nu umblu prin stilurile fiecărei componente. Pe lângă CSS,
+exportul scoate și meta taguri Open Graph (\texttt{og:title}, \texttt{og:description},
+\texttt{og:image}), tot din \texttt{meta}, ca pagina să arate decent când o lipești
+într-un mesaj sau pe o rețea socială.
+
+Responsivitatea o rezolv cu trei praguri \texttt{@media}. La 1024 px intervin pentru
+tablete: grid-urile de patru coloane se strâng la două. La 768 px e rândul
+telefoanelor: două coloane devin una, iar navbar-ul ascunde linkurile și scoate
+butonul hamburger. La 480 px micșorez textul prin \texttt{clamp()} și tai din
+padding-ul secțiunilor, ca pe ecran mic să nu se irosească spațiu. Hamburger-ul însuși
+e cât se poate de simplu: un toggle al clasei \texttt{.open} pe containerul de
+linkuri, iar CSS-ul face restul cu o tranziție pe \texttt{max-height}. Fără bibliotecă,
+fără JavaScript complicat.
+
+JavaScript-ul generat are cinci comportamente, toate scrise de mână, fără bibliotecă.
+Accordion-ul de FAQ deschide și închide răspunsul prin clasa \texttt{.open} pe
+\texttt{.pb-faq-item}, animat tot pe \texttt{max-height}. Tab-urile leagă butoanele de
+panouri prin atributul \texttt{data-tab}: apeși un buton, primește \texttt{.active}
+și se arată panoul lui. Reveal-ul la scroll merge pe \texttt{IntersectionObserver},
+care animă opacitatea și translația componentelor când intră în viewport, la un prag
+de 15\%; am ales \texttt{IntersectionObserver} tocmai ca să nu mai ascult evenimentul
+de scroll la fiecare pixel, care e risipă de procesor. Countdown-ul citește
+\texttt{data-target} ca timestamp Unix și ticăie în timp real, pornit de același
+observer. N-are sens să numere înainte să-l vadă cineva. Iar formularele: intercept
+\texttt{submit}, strâng câmpurile cu \texttt{FormData}, le serializez ca JSON și le
+trimit cu \texttt{fetch()} la endpoint-ul public de submisii, apoi afișez în pagină
+succes sau eroare, fără reîncărcare.
+
+La export ZIP, serverul împachetează arhiva în memorie (\texttt{index.html},
+\texttt{styles.css}, \texttt{main.js}) și o întoarce cu tipul
+\texttt{application/zip}. Un amănunt care m-a costat ceva timp de depanare: parametrul
+din URL e \texttt{?type=zip}, nu \texttt{?format=zip}. DRF interceptează singur
+\texttt{?format=} pentru content negotiation, așa că, dacă foloseam acel nume, cererea
+mea de ZIP era „mâncată" înainte să ajungă la cod. Am redenumit parametrul în
+\texttt{type} și problema a dispărut.
+
+\subsection{Sistemul de plăți cu Stripe}
+
+\texttt{payments} face plăți reale prin Stripe \cite{stripedocs}, pe modelul
+\textit{PaymentIntents}. Fluxul are patru pași. Întâi, frontend-ul cere cu
+\texttt{GET /api/payments/config/} cheia publicabilă Stripe, ca să inițializeze
+Stripe.js. Apoi un \texttt{POST} la \texttt{/api/payments/create-intent/} creează pe
+Stripe un \texttt{PaymentIntent} cu suma planului ales și cu metadata aferentă (plan,
+email, user ID), iar răspunsul aduce \texttt{client\_secret}-ul cu care clientul va
+confirma plata.
+
+Confirmarea pe card o face Stripe.js direct în browser, și aici e poanta de
+securitate: numărul cardului nu trece niciodată prin serverul meu, deci nici nu am ce
+să scurg. Partea de server vine după, printr-un \texttt{POST} la
+\texttt{/api/payments/confirm/}: întreb Stripe dacă \texttt{PaymentIntent}-ul chiar e
+pe \texttt{succeeded}, trec printr-o gardă de idempotență pe
+\texttt{stripe\_payment\_intent\_id} (unic) și, dacă totul e curat, activez planul
+pentru 30 de zile și trimit emailul HTML de confirmare. Starea curentă și istoricul se
+văd la \texttt{/api/payments/status/} și \texttt{/api/payments/history/}.
+
+Emailul de confirmare l-am scris cu CSS inline, fiindcă clienții de email, mai ales
+Outlook, aruncă jumătate din regulile dintr-un \texttt{<style>} extern. Are un antet
+cu gradient (de la \texttt{\#1a53d6} la \texttt{\#4F7CFF}), titlul „Plată confirmată"
+și un salut cu numele utilizatorului. Apoi un tabel cu rânduri alternante înșiră
+detaliile: planul activat, suma (\$9.99 pentru Pro, \$29.99 pentru Enterprise),
+referința de plată (primele opt caractere ale UUID-ului, cu majuscule), cardul mascat
+(\texttt{**** **** **** XXXX}), data plății și data expirării. Aceasta din urmă o
+pun pe verde, ca să sară în ochi cât e valabil planul. Jos, un buton spre dashboard.
+Trimit și o versiune text simplă, cu aceleași date, pentru cine nu randează HTML.
+
+Un detaliu de robustețe la care am ținut: \texttt{send\_mail()} e apelat cu
+\texttt{fail\_silently=True}. Logica e că plata e mult mai importantă decât emailul.
+Dacă SMTP-ul cade (și în development pică des, fiindcă rar ai un server de mail
+configurat corect), nu vreau ca eșecul trimiterii să arunce o excepție tocmai după
+ce am încasat banii și am activat planul în baza de date. Activarea s-a întâmplat deja;
+emailul e doar curtoazie.
+
+\texttt{Payment} ține istoricul: \texttt{user} (FK, \texttt{CASCADE} la ștergere),
+\texttt{plan} (pro/enterprise), \texttt{amount} (și aici o notă: suma e în cenți, nu
+în dolari, ca să nu mă lovesc niciodată de erorile de rotunjire ale numerelor cu
+virgulă), \texttt{status} (completed/failed), \texttt{reference} (UUID unic generat
+la creare), \texttt{card\_last4}, \path{stripe_payment_intent_id} (ID-ul Stripe, câmpul
+unic pe care se sprijină idempotența) și \texttt{created\_at}. Modelul ăsta, împreună
+cu \texttt{plan} și \texttt{plan\_expires\_at} de pe \texttt{User}, îmi dă verificarea
+de acces Pro pe gratis: \texttt{is\_pro} răspunde direct din obiectul user încărcat
+deja din token, fără să mai lovesc baza de date încă o dată.
+
+\section{Frontend-ul SPA}
+
+Unde să ții token-urile în frontend e una dintre acele întrebări fără răspuns perfect,
+doar compromisuri. Eu am ales așa: access token-ul stă \emph{numai} în memorie,
+în variabila \texttt{\_access} a singletonului \texttt{Auth}, și dispare la
+reîncărcarea paginii. Refresh token-ul, în schimb, e persistent în
+\texttt{localStorage}, ca sesiunea să supraviețuiască un refresh de browser, până la 7
+zile. La fiecare încărcare de pagină, \texttt{tryRefresh()} încearcă să schimbe
+refresh-ul pe un access nou; dacă nu reușește, șterge tot și te trimite la login.
+
+De ce această împărțeală, și nu să pun amândouă în \texttt{localStorage}, cum e mai
+simplu? Pentru că împart riscul. Un atac XSS care reușește să injecteze script poate
+citi refresh token-ul din \texttt{localStorage}, asta o recunosc, nu e o apărare
+perfectă, dar nu poate atinge access token-ul, care nu există nicăieri pe disc, doar
+în memoria paginii curente. Cu alte cuvinte, restrâng fereastra în care un token furat
+chiar e util. E un compromis, nu o garanție; dar e mai bun decât a lăsa amândouă
+token-urile la îndemână.
+
+Frontend-ul e un SPA cu rutare pe hash, fără build tools și fără framework. Inima
+comunicării e \texttt{apiFetch()}, un wrapper peste \texttt{fetch()} care pune singur
+header-ul \texttt{Authorization: Bearer} pe fiecare cerere autentificată. Partea care
+mi-a plăcut cel mai mult să o scriu e ce face la \texttt{401}: cheamă transparent
+endpoint-ul de refresh, ia un access token nou și \emph{reia} cererea originală, fără
+ca utilizatorul să observe ceva. Token-ul a expirat la mijlocul unei acțiuni? Nu se
+vede nimic; acțiunea pur și simplu reușește.
+
+Router-ul ascultă \texttt{hashchange} și leagă tipare de cale (\texttt{/},
+\texttt{/auth}, \texttt{/dashboard}, \texttt{/editor/:id}, \texttt{/share/:token}) de
+funcții de randare. Am mers pe hash, nu pe History API, dintr-un motiv foarte practic:
+History API ar fi cerut configurație de rewrite pe server pentru fiecare rută, pe când
+hash-ul merge oriunde pui fișierele, fără nimic pe partea de server. Pentru un proiect
+care se laudă cu deployment simplu, era alegerea coerentă.
+
+Editorul se învârte în jurul unui panou lateral cu componentele grupate pe categorii.
+Când adaugi una, frontend-ul întâi cere proprietățile implicite de la
+\texttt{ComponentDefaultsView}, apoi trimite un \texttt{POST} la
+\texttt{ComponentUpsertView}. Orice schimbare de proprietate pleacă imediat la server,
+tot printr-un \texttt{POST}, iar layoutul local se rescrie cu răspunsul. Serverul
+rămâne sursa de adevăr, frontend-ul doar îl oglindește. Previzualizarea o randez
+într-un iframe care afișează HTML-ul scos de motorul de export, ca să vezi
+rezultatul real, așa cum va apărea după publicare.
+
+Ca să coordoneze toate astea, editorul ține câteva variabile globale de stare.
+\texttt{editorProject} și \texttt{editorLayout} sunt referințele curente la proiect și
+la JSON-ul layoutului, resincronizate la fiecare răspuns al API-ului. \texttt{selectedId}
+e componenta selectată acum: ea decide ce proprietăți apar în panoul din dreapta.
+\texttt{isDirty} spune dacă ai modificări locale nesalvate; când e ridicat, pornește
+\texttt{autoSaveTimer}, care trimite totul la server după câteva secunde de liniște,
+fără să apeși tu „salvează". Și apoi sunt \texttt{undoStack} cu \texttt{redoStack},
+istoricul local pe \texttt{Ctrl+Z} / \texttt{Ctrl+Y}. Aici e o dublare conștientă:
+versionarea de pe server e plasa de siguranță durabilă, dar e prea lentă pentru un
+„ups, anulează": nimeni nu vrea un request la server ca să dea undo. Stivele locale
+fac undo/redo-ul instant, iar snapshot-urile rămân pentru istoricul serios.
+
+Panoul din stânga ține cele 38 de tipuri în cinci categorii pliabile: Layout,
+Conținut, Media, Interactive, Secțiuni. Click pe un tip, iar editorul cere
+proprietățile implicite de la \texttt{ComponentDefaultsView} (un \texttt{hero}, de
+pildă, vine gata cu titlu, subtitlu și două butoane, ca să nu te uiți la o cutie
+goală), trimite upsert-ul și actualizează \texttt{editorLayout} cu răspunsul. Sus, în
+bara de navigare, am pus trei butoane de previzualizare: desktop (100\%), tabletă
+(768\,px), mobil (375\,px), care nu fac decât să redimensioneze iframe-ul, fără
+reîncărcare. Așa verifici cum arată exportul pe telefon fără să ieși din editor și
+fără să scoți de fapt arhiva.
+
+\section{Considerații de securitate}
+
+O aplicație cu autentificare și plăți atrage o anumită clasă de probleme, și am
+încercat să le iau pe rând, nu să bifez o listă. Cel mai des întâlnit pericol e accesul
+la resursa altcuiva, așa că prima linie de apărare e permisiunea \texttt{IsOwner} din
+\texttt{core/permissions.py}: la fiecare cerere verifică \texttt{request.user ==
+obj.owner} și taie accesul inter-utilizatori la proiecte, versiuni, pagini și submisii.
+Important e că o aplic \emph{explicit} în fiecare ViewSet și APIView care atinge
+resurse personale, nu mă bazez doar pe filtrarea implicită a query set-ului, fiindcă
+aceea protejează listarea, dar nu și un acces direct pe ID.
+
+A doua linie e validarea la frontiera API. \texttt{validate\_layout()} rulează înainte
+de orice scriere pe \texttt{layout}, iar tipurile sunt închise la mulțimea
+\texttt{VALID\_COMPONENT\_TYPES}. Asta acoperă două lucruri deodată: integritatea
+datelor (nu intră structuri stricate) și tentativa de a strecura un tip inventat,
+care altfel ar putea ajunge text arbitrar în HTML-ul exportat. E principiul de
+validare la graniță pe care îl recomandă OWASP \cite{owasp2021}: nu ai încredere în
+nimic din ce vine din afară.
+
+Singurul endpoint deschis spre lume e cel de submisii de formulare, deci tot el e
+singurul care are nevoie cu adevărat de rate limiting. Îl fac cu cache-ul Django: cheia se
+compune din token-ul de partajare, ID-ul formularului și IP-ul clientului, adică un
+contor separat pe fiecare formular și fiecare vizitator. Crește la fiecare cerere și,
+peste zece pe oră, refuz. IP-ul îl iau din \texttt{X-Forwarded-For} dacă există (cazul
+unui proxy sau load balancer în față), cu cădere pe \texttt{REMOTE\_ADDR}. Recunosc că
+nu e blindat: cine schimbă IP-ul ușor trece de el, dar pentru spam-ul obișnuit de
+boți e suficient, și nu am vrut să trag un Redis în proiect doar pentru atât.
+
+La plăți, garda de idempotență oprește activarea dublă. Înainte să umblu la planul
+utilizatorului, verific unicitatea lui \path{stripe_payment_intent_id} în tabela
+\texttt{Payment}: dacă plata e deja înregistrată, răspund cu eroare și nu reexecut
+nimic. Scenariul concret de care mă apăr e banal: omul dă refresh pe pagina de
+confirmare, dar fără gardă l-ar fi taxat de două ori, ceea ce e genul de bug
+pe care nu vrei să-l ai într-un flux de bani.
+
+Restul sunt măsuri de configurație, dar nu mai puțin importante. CORS lasă să treacă
+doar originile din \texttt{CORS\_ALLOWED\_ORIGINS}, cu
+\texttt{CORS\_ALLOW\_CREDENTIALS=True} pentru header-ele de autorizare.
+\texttt{SECRET\_KEY} e obligatoriu prin variabilă de mediu, fără valoare implicită:
+prefer o aplicație care refuză să pornească decât una care pornește cu o cheie
+default cunoscută. Iar \texttt{DEBUG} e \texttt{False} implicit, ca să nu scap din
+greșeală pagini de eroare Django pline de detalii în producție.
+
+% ═══════════════════════════════════════════════════════════════════════════
+%  CAPITOLUL 4 - REZULTATE ȘI EVALUARE
+% ═══════════════════════════════════════════════════════════════════════════
+\chapter{Rezultate și Evaluare}
+
+\section{Strategia de testare}
+
+Am ales pentru IWB doar teste de integrare la nivel de API, fără să mock-uiesc baza de
+date. E o decizie pe care merită să o explic, fiindcă nu e cea mai la modă. Testele
+folosesc \texttt{APITestCase} din DRF, care ridică o bază de date de test izolată
+pentru fiecare clasă, iar un client HTTP simulează cererile fără să deschidă un socket
+real, deci suita întreagă rulează în secunde. Motivul pentru care am evitat
+mock-urile pe baza de date e simplu: ele ascund tocmai bug-urile care mă speriau cel mai
+tare, cele de migrare și de interacțiune cu ORM-ul, care apar numai pe o bază de date
+adevărată. Un test care trece pe un mock și pică pe Postgres e mai rău decât niciun
+test.
+
+Peste tot revine același helper de autentificare: fiecare clasă își face un user cu
+\texttt{User.objects.create\_user()}, scoate token-uri JWT printr-un \texttt{POST} la
+\texttt{/api/auth/login/}, apoi cheamă
+\texttt{self.client.credentials(HTTP\_AUTHORIZATION=f'Bearer \{access\}')} ca toate
+cererile de după să fie autentificate. Cele mai importante mi se par testele de
+izolare: creez doi utilizatori și verific că, atunci când unul cere resursa celuilalt,
+primește \texttt{403 Forbidden} sau \texttt{404 Not Found}. Acolo se vede negru pe alb
+dacă \texttt{IsOwner} chiar își face treaba.
+
+\section{Acoperirea testelor}
+
+În total sunt 68 de teste, împărțite inegal pe șase aplicații
+(Tabelul~\ref{tab:tests}). Inegal, pentru că le-am pus acolo unde era riscul, nu ca
+să iasă cifre rotunde pe fiecare modul.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Distribuția testelor pe aplicații}
+  \label{tab:tests}
+  \renewcommand{\arraystretch}{1.3}
+  \begin{tabularx}{\textwidth}{>{\bfseries}l X r}
+    \toprule
+    Aplicație & Clase de teste acoperite & Nr. \\
+    \midrule
+    \texttt{landing}  & \texttt{LandingTests}, endpoint public, acces fără JWT & 2 \\
+    \texttt{core}     & \texttt{ValidatorTests}, validare layout și componente & 11 \\
+    \texttt{users}    & \texttt{RegisterTests}, \texttt{LoginTests},
+                        \texttt{LogoutTests}, \texttt{ProfileTests} & 10 \\
+    \texttt{projects} & \texttt{ProjectCRUDTests}, \texttt{ProjectVersionTests},
+                        \texttt{FormSubmitTests}, \texttt{TagTests},
+                        \texttt{PageTests}, \texttt{ProjectTemplateTests} & 29 \\
+    \texttt{editor}   & \texttt{EditorLayoutTests}, layout, upsert, delete, reorder & 8 \\
+    \texttt{exporter} & \texttt{ExportTests}, ZIP, JSON, auth, izolare utilizatori & 8 \\
+    \midrule
+    \textbf{Total} & & \textbf{68} \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+Cele 11 teste de pe \texttt{core} țintesc validarea, fiindcă acolo e zidul. Unul
+singur e pozitiv: confirmă că un layout corect trece curat. Restul caută necazul:
+\texttt{"id"} duplicat pe același nivel, \texttt{"id"} duplicat între părinte și copil
+(cazul cross-nivel, cel pe care e cel mai ușor să-l ratezi), componentă fără
+\texttt{"type"}, tip inventat (\texttt{"invalid\_type"}), un \texttt{"section"} fără
+\texttt{"children"}, ID gol (\texttt{""}) și layout fără cheia rădăcină
+\texttt{"components"}. Am vrut să ating fiecare ramură de \texttt{if} din
+\texttt{validate\_component()} și \texttt{validate\_layout()}. Nu mă interesa că
+validarea merge pe cazul fericit, ci că respinge fiecare fel de gunoi în parte.
+
+\texttt{projects} adună cele mai multe teste, 29, pe șase clase. \texttt{ProjectCRUDTests}
+acoperă create/list/update/delete și verifică faptul de bază: vezi doar proiectele
+tale. \texttt{ProjectVersionTests} confirmă că fiecare operație de editor lasă un
+snapshot și că restaurarea funcționează corect: după ea, layoutul e cel al versiunii
+alese, iar starea de dinainte de restaurare e ea însăși salvată ca versiune nouă (fix
+comportamentul „nu pierzi nimic" pe care l-am promis în Capitolul~3).
+\texttt{FormSubmitTests} prinde și submisia normală, și rate limiting-ul: după zece
+submisii reușite de pe același IP, a unsprezecea ia \texttt{429}. \texttt{TagTests},
+\texttt{PageTests} și \texttt{ProjectTemplateTests} fac CRUD pe entitățile din jurul
+proiectului.
+
+\texttt{exporter} verifică partea care contează pentru utilizator: că arhiva ZIP are
+chiar cele trei fișiere (\texttt{index.html}, \texttt{styles.css}, \texttt{main.js}),
+că JSON-ul de previzualizare iese, că un neautentificat ia \texttt{401} și că B nu
+poate exporta proiectul lui A. Toate cele 68 trec curat pe configurația de development,
+pe SQLite. Nu pretind că 68 de teste înseamnă acoperire completă: ating endpoint-urile
+și ramurile critice, dar mai sunt colțuri neacoperite, mai ales pe frontend, care nu e
+testat automat deloc.
+
+\section{Studii de caz}
+
+\subsection{Cazul 1: Creare și export pagină simplă}
+
+Un utilizator logat face un proiect minimal, \texttt{navbar} + \texttt{hero} +
+\texttt{footer}, și exportă ZIP-ul. Cele trei fișiere (\texttt{index.html},
+\texttt{styles.css}, \texttt{main.js}) merg fără nicio dependență: le deschizi direct
+cu \texttt{file://} sau le pui pe orice server static și pagina arată la fel. Am
+verificat asta inclusiv pe telefon: navbar-ul are hamburger funcțional, deși nu e
+nici urmă de Bootstrap sau de vreun framework JS în arhivă. E cazul cel mai banal, dar
+și cel care demonstrează promisiunea de bază: ce iese din IWB nu mai are nevoie de IWB.
+
+\subsection{Cazul 2: Restaurarea unei versiuni}
+
+Utilizatorul modifică layoutul de câteva ori și apoi vrea înapoi la o stare de mai
+devreme, scenariul clasic „am stricat ceva, dă-mi varianta de acum o oră". Cheamă
+endpoint-ul de restaurare cu ID-ul versiunii dorite; sistemul îngheață mai întâi starea
+curentă într-un snapshot nou (cu o notă pusă automat) și abia apoi rescrie
+\texttt{layout} cu cel ales. Subtilitatea, pe care o repet pentru că e ușor de ratat în
+proiectele cu undo: nici starea curentă nu se pierde, ci devine și ea o versiune în
+istoric. Așa poți merge înainte și înapoi printre toate stările, fără capăt de drum.
+
+\subsection{Cazul 3: Partajare publică și colectare formulare}
+
+Utilizatorul aprinde accesul public. De acolo, oricine are link-ul deschide pagina
+fără cont, iar ce trimit vizitatorii prin formulare ajunge la proprietar prin
+endpoint-ul de submisii. Spam-ul e ținut în frâu de rate limiting: a unsprezecea
+submisie de pe același IP într-o oră ia \texttt{429 Too Many Requests}. Și dacă, dintr-un
+motiv sau altul, vrei să tai accesul cuiva, regenerezi token-ul de partajare: vechiul
+link moare instant, fără să fie nevoie să schimbi sau să ștergi proiectul.
+
+\subsection{Cazul 4: Checkout Stripe și activare abonament}
+
+Utilizatorul cere planul Pro. Frontend-ul ia \texttt{client\_secret} de la endpoint-ul
+de creare a intenției și confirmă plata cu Stripe.js, direct pe card. La confirmarea de
+server, întreb Stripe dacă \texttt{PaymentIntent}-ul e pe \texttt{succeeded}, trec prin
+garda de idempotență și activez planul pe loc. Pleacă apoi emailul HTML cu detaliile:
+sumă, referință, ultimele patru cifre ale cardului, data expirării. L-am testat repetat
+cu cardurile de test Stripe, inclusiv dând refresh pe pagina de confirmare ca să mă
+asigur că garda chiar oprește dubla activare; de fiecare dată planul s-a activat o
+singură dată.
+
+\section{Limitări ale sistemului}
+
+Prefer să fiu sincer cu ce nu face IWB, fiindcă lista asta spune mai mult despre
+proiect decât lauda. E un prototip de licență, și se vede.
+
+Cea mai vizibilă limită e editorul în sine: nu am un canvas WYSIWYG cu drag-and-drop
+adevărat. Adaugi și aranjezi componentele din panoul lateral, ceea ce funcționează, dar
+e clar mai puțin intuitiv decât să tragi un bloc exact unde vrei pe pagină, cum face
+Wix. Pentru o demonstrație de concept e suficient; pentru un utilizator real, ar fi
+prima frustrare. Tot legat de editor: nu există editare simultană: doi oameni pe
+același proiect și-ar călca în picioare, fiindcă nu am nicio strategie de rezolvare a
+conflictelor.
+
+Apoi sunt limitele de infrastructură. Imaginile uploadate stau pe disc local, ceea ce
+e în regulă pe laptopul meu, dar cade din prima la un deployment serios: ai nevoie
+de un S3 sau ceva similar. Rate limiting-ul îl am doar pe formulare, prin cache-ul
+Django; în producție aș muta asta pe nginx sau Redis. Iar exportul, deși modelul de
+date știe deja de pagini multiple, scoate deocamdată un singur \texttt{index.html}, fără
+navigare între pagini; e o extindere pe care o am pe listă, nu o problemă de
+arhitectură. Cele 38 de tipuri de componente sunt și ele puține față de sutele dintr-un
+produs comercial, deși aici chiar e ușor de crescut: trei fișiere per tip nou, cum am
+arătat.
+
+% ═══════════════════════════════════════════════════════════════════════════
+%  CAPITOLUL 5 - CONCLUZII
+% ═══════════════════════════════════════════════════════════════════════════
+\chapter{Concluzii și direcții viitoare de dezvoltare}
+
+\section{Concluzii}
+
+Lucrarea a urmărit, de la cap la coadă, cum se construiește IWB: un editor
+web vizual de tip page builder, cu arhitectură client-server, backend Django~5.2 REST
+și frontend SPA în JavaScript nativ.
+
+Câteva decizii s-au dovedit centrale, și le-aș lua la fel a doua oară. Împărțirea
+backend-ului în șapte aplicații cu granițe clare a făcut codul ușor de extins pe bucăți,
+fără ca o modificare să rupă altceva. Validarea recursivă a layoutului la frontiera API
+s-a dovedit zidul care chiar a ținut afară structurile stricate și tipurile inventate.
+Versionarea automată, cu un snapshot înaintea fiecărei modificări, a transformat „am
+pierdut munca" într-un non-eveniment. Iar motorul de export, partea de care sunt cel
+mai mulțumit, livrează ce promite: un pachet HTML/CSS/JS care trăiește fără IWB,
+pe orice hosting static, lucrul pe care platformele comerciale închise nu ți-l
+dau. Peste astea, JWT-ul cu rotație și blacklisting taie reutilizarea token-urilor
+furate, iar integrarea Stripe încasează bani reali cu o gardă de idempotență care nu
+lasă să se întâmple dubla activare.
+
+Dacă e o concluzie pe care vreau să o rețină cineva, e că nu ai nevoie de un stack
+greu ca să faci asta. Un page builder funcțional încape pe tehnologii open-source
+standard, fără React și fără infrastructură scumpă, iar cele 68 de teste de
+integrare, rulate pe o bază de date reală, arată că lanțul ține în condiții
+apropiate de cele de producție.
+
+\section{Direcții viitoare de dezvoltare}
+
+Dacă ar fi să continui proiectul, și sper să o fac, prioritățile nu sunt egale.
+Le-aș pune cam în ordinea de mai jos, de la ce schimbă cel mai mult experiența până la
+ce întărește colțurile.
+
+\subsection{Canvas drag-and-drop vizual}
+Asta e, fără discuție, lucrul care lipsește cel mai tare. Un canvas pe care tragi
+blocul exact unde vrei, în timp real, ar apropia IWB de senzația unui editor comercial.
+Nu e trivial: ar cere un management de stare mai serios în frontend și o sincronizare
+mai fină cu backend-ul decât „trimite tot layoutul la fiecare schimbare". Probabil aici
+ar ceda în sfârșit decizia mea de a evita un framework.
+
+\subsection{Export multi-pagină}
+Următoarea pe listă, și cea mai aproape de a fi gata. Modelul de date știe deja de
+pagini multiple (\texttt{Page} are câmp \texttt{order}), deci nu mai rămâne decât
+ca motorul de export să itereze toate paginile și să scoată câte un HTML pentru fiecare,
+cu navigare între ele. E mai mult muncă de scris decât problemă de gândit.
+
+\subsection{Colaborare în timp real}
+Editare simultană, mai mulți oameni pe același proiect. Ar însemna WebSocket (Django
+Channels) și o strategie reală de rezolvare a conflictelor, pe CRDT sau transformări
+operaționale \cite{shapiro2011}. Partea grea, de fapt, e a doua, nu transportul.
+
+\subsection{Stocarea imaginilor în cloud}
+Mutarea imaginilor de pe discul local pe S3, Cloudflare R2 sau echivalent. E condiția
+fără de care un deployment scalabil nici nu are sens, și e și relativ ușor de făcut:
+Django are deja backend-uri de storage pentru asta.
+
+\subsection{Teme și personalizare vizuală}
+Un sistem de teme (palete, fonturi) care să atingă tot site-ul exportat printr-un
+singur set de variabile. Aici infrastructura e deja pusă: \texttt{meta} poate ține
+variabilele CSS globale, iar motorul de export le injectează. Mai lipsește doar
+interfața care să le aleagă frumos.
+
+\subsection{Indexare SEO și webhooks Stripe}
+Două colțuri de întărit. Pe de o parte, un pre-render sau SSR pentru ca paginile
+publice să fie indexabile, ceea ce rezolvă dezavantajul clasic al unui SPA. Pe de alta, un endpoint
+de webhook Stripe pentru evenimentele asincrone (eșec de plată, anulare de abonament),
+ca fluxul de bani să nu mai depindă doar de confirmarea care vine de la client și să
+reziste la un timeout de rețea.
+
+% ═══════════════════════════════════════════════════════════════════════════
+%  BIBLIOGRAFIE (inline - nu necesită fișier .bib separat)
+% ═══════════════════════════════════════════════════════════════════════════
+\begin{thebibliography}{99}
+\addcontentsline{toc}{chapter}{Bibliografie}
+
+\bibitem{djangodocs}
+Django Software Foundation.
+\textit{Django Documentation, Version 5.2}, 2025.
+\url{https://docs.djangoproject.com/en/5.2/}.
+Accesat: mai 2026.
+
+\bibitem{drfdocs}
+T. Christie and contributors.
+\textit{Django REST Framework Documentation}, 2024.
+\url{https://www.django-rest-framework.org/}.
+Accesat: mai 2026.
+
+\bibitem{simplejwt}
+Jazzband contributors.
+\textit{Simple JWT, A JSON Web Token authentication plugin for Django REST Framework}, 2024.
+\url{https://django-rest-framework-simplejwt.readthedocs.io/}.
+Accesat: mai 2026.
+
+\bibitem{stripedocs}
+Stripe, Inc.
+\textit{Stripe API Reference, Python SDK}, 2025.
+\url{https://stripe.com/docs/api}.
+Accesat: mai 2026.
+
+\bibitem{sqlitedocs}
+R. Hipp and contributors.
+\textit{SQLite Documentation}, 2024.
+\url{https://www.sqlite.org/docs.html}.
+Accesat: mai 2026.
+
+\bibitem{postgresqldocs}
+PostgreSQL Global Development Group.
+\textit{PostgreSQL 16 Documentation}, 2024.
+\url{https://www.postgresql.org/docs/16/}.
+Accesat: mai 2026.
+
+\bibitem{rfc7519}
+M. Jones, J. Bradley, and N. Sakimura.
+\textit{RFC 7519: JSON Web Token (JWT)}.
+Internet Engineering Task Force (IETF), May 2015.
+\url{https://www.rfc-editor.org/rfc/rfc7519}.
+
+\bibitem{rfc8259}
+T. Bray.
+\textit{RFC 8259: The JavaScript Object Notation (JSON) Data Interchange Format}.
+IETF, December 2017.
+\url{https://www.rfc-editor.org/rfc/rfc8259}.
+
+\bibitem{fielding2000}
+R. T. Fielding.
+\textit{Architectural Styles and the Design of Network-based Software Architectures}.
+PhD thesis, University of California, Irvine, 2000.
+\url{https://ics.uci.edu/~fielding/pubs/dissertation/top.htm}.
+
+\bibitem{shapiro2011}
+M. Shapiro, N. Preguiça, C. Baquero, and M. Zawirski.
+Conflict-Free Replicated Data Types.
+In \textit{Stabilization, Safety, and Security of Distributed Systems (SSS 2011)},
+pages 386--400. Springer, 2011.
+
+\bibitem{mdnSPA}
+Mozilla Developer Network contributors.
+\textit{Single-page application (SPA), MDN Web Docs Glossary}, 2024.
+\url{https://developer.mozilla.org/en-US/docs/Glossary/SPA}.
+Accesat: mai 2026.
+
+\bibitem{mdnFetch}
+Mozilla Developer Network contributors.
+\textit{Fetch API, Web APIs, MDN Web Docs}, 2024.
+\url{https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API}.
+Accesat: mai 2026.
+
+\bibitem{owasp2021}
+OWASP Foundation.
+\textit{OWASP Top Ten 2021}, 2021.
+\url{https://owasp.org/www-project-top-ten/}.
+Accesat: mai 2026.
+
+\bibitem{wixwebsite}
+Wix.com.
+\textit{Wix, Create a Free Website}, 2024.
+\url{https://www.wix.com/}.
+Accesat: mai 2026.
+
+\bibitem{webflowsite}
+Webflow, Inc.
+\textit{Webflow: Create a custom website}, 2024.
+\url{https://webflow.com/}.
+Accesat: mai 2026.
+
+\bibitem{squarespace}
+Squarespace, Inc.
+\textit{Squarespace, Build a Website}, 2024.
+\url{https://www.squarespace.com/}.
+Accesat: mai 2026.
+
+\bibitem{grapesjs}
+A. Arseniev and contributors.
+\textit{GrapesJS, Free and Open Source Web Builder Framework}, 2024.
+\url{https://grapesjs.com/}.
+Accesat: mai 2026.
+
+\bibitem{w3techs}
+W3Techs.
+\textit{Usage Statistics and Market Share of Content Management Systems}, 2025.
+\url{https://w3techs.com/technologies/overview/content_management}.
+Accesat: mai 2026.
+
+\end{thebibliography}
+
+\end{document}
